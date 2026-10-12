@@ -1,0 +1,15 @@
+{
+  "name": "duolcode-base",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "setup": "node scripts/setup-env.ts",
+    "test": "npm --prefix backend test",
+    "build:api": "npm --prefix backend run build",
+    "build:web": "npm --prefix frontend run build"
+  }
+}
