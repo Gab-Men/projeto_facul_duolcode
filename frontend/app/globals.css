@@ -1806,6 +1806,28 @@ h2 em {
 body:has(.admin) .whatsapp-fixed {
   display: none;
 }
+.stats-source, .stats-axis { font-size: 13px; color: #476552; }
+.stats-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 26px 0; }
+.stats-metric h2 { font-size: 15px; line-height: 1.4; letter-spacing: 0; }
+.stats-metric strong { display: block; font-size: 32px; line-height: 1.5; }
+.stats-metric small { display: block; color: #476552; }
+.stats-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+.stats-chart { margin: 0; min-width: 0; }
+.stats-chart h2 { line-height: 1.25; letter-spacing: -.02em; }
+.stats-chart figcaption p { font-size: 14px; color: #476552; }
+.stats-chart svg { display: block; width: 100%; height: auto; }
+.stats-chart svg text { font: 13px Arial, sans-serif; fill: #193f31; }
+.stats-bars { display: grid; gap: 14px; margin: 28px 0; }
+.stats-bar-row { display: grid; grid-template-columns: minmax(70px, 130px) minmax(30px, 1fr) 35px; align-items: center; gap: 10px; font-size: 13px; }
+.stats-bar-row > span { overflow-wrap: anywhere; }
+.stats-bar-row > strong { text-align: right; }
+.stats-bar-track { height: 23px; background: #edf2e9; border-radius: 3px; }
+.stats-bar-track > div { height: 100%; background: #246449; border-radius: 3px; }
+.stats-findings, .stats-method { margin-top: 24px; }
+.stats-method summary { cursor: pointer; font-weight: bold; }
+.stats-method p:first-of-type { margin-top: 18px; }
+@media (max-width: 900px) { .stats-charts { grid-template-columns: 1fr; } }
+@media (max-width: 650px) { .stats-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .stats-metric { padding: 14px; } }
 @media (max-width: 650px) {
   .admin {
     padding: 16px;

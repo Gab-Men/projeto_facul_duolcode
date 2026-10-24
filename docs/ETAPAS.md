@@ -23,7 +23,7 @@ Troquem de função em pelo menos uma etapa, para ambos entenderem front-end e b
 5. Rodem os testes e a compilação relevante.
 6. A outra pessoa revisa e executa o fluxo; depois integrem a branch.
 
-O projeto foi entregue sem Git inicializado para vocês escolherem onde hospedá-lo. A inicialização, o remoto e os convites à dupla são uma etapa separada.
+O projeto já possui Git e remoto em https://github.com/Gab-Men/projeto_facul_duolcode. Antes de entregar, revisem as alterações, façam commit/push e confiram o acesso do professor.
 
 ## Melhorias que podem esperar
 
@@ -31,5 +31,5 @@ O projeto foi entregue sem Git inicializado para vocês escolherem onde hospedá
 - Compartilhar um espaço de trabalho entre contas da equipe, caso esse seja o produto desejado.
 - Adicionar busca, filtros, status de projeto e paginação na seleção de clientes.
 - Criar migrações de banco e testes de integração automatizados com MySQL.
-- Refinar classes, getters com regras reais e princípios SOLID conforme discussão com o professor.
+- Evoluir a modelagem e princípios SOLID conforme novas regras; a sprint atual já usa getters de cálculo e encapsulamento em PortfolioAnalysis.
 - Preparar publicação com HTTPS e políticas de sessão adequadas.

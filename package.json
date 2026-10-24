@@ -9,6 +9,7 @@
   "scripts": {
     "setup": "node scripts/setup-env.ts",
     "test": "npm --prefix backend test",
+    "verify:sprint": "node scripts/verify-sprint.ts",
     "build:api": "npm --prefix backend run build",
     "build:web": "npm --prefix frontend run build"
   }

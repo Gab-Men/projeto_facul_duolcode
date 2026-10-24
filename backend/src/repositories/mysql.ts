@@ -2,6 +2,25 @@ import type { Pool, RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import type { RecordRepository, UserRepository } from "./contracts.js";
 import type { BusinessRecord, Page, RecordInput, Resource, User } from "../domain/validation.js";
 import { NotFoundError } from "../errors/app-error.js";
+import type { StatisticsRepository } from "./contracts.js";
+import type { ClientLoad } from "../domain/portfolio-analysis.js";
+
+export class MysqlStatisticsRepository implements StatisticsRepository {
+  constructor(private readonly db: Pool) {}
+  async clientLoads(ownerId: number): Promise<ClientLoad[]> {
+    const [rows] = await this.db.execute<RowDataPacket[]>(
+      `SELECT c.id AS clientId, c.name, COUNT(p.id) AS projects
+       FROM clientes c
+       LEFT JOIN projetos p ON p.clientId = c.id AND p.ownerId = c.ownerId
+       WHERE c.ownerId = ?
+       GROUP BY c.id, c.name ORDER BY c.id`,
+      [ownerId],
+    );
+    return rows.map((row) => ({
+      clientId: Number(row.clientId), name: String(row.name), projects: Number(row.projects),
+    }));
+  }
+}
 // Table and column identifiers are fixed in source; values always use parameters.
 const extraColumns: Record<Resource, string[]> = {
   clientes: ["email"],

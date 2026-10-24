@@ -1,4 +1,5 @@
 export function validCpf(value: string): boolean {
+  if (!/^[\d.\-\s]+$/.test(value)) return false;
   const cpf = value.replace(/\D/g, "");
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
   for (let size = 9; size <= 10; size++) {

@@ -91,7 +91,17 @@ const account = {
 function fixture() {
   const users = new MemoryUsers();
   const records = new MemoryRecords();
-  return { users, records, app: createApp({ users, records, jwtSecret: secret }) };
+  const statistics = {
+    async clientLoads(ownerId: number) {
+      return records.rows.filter((row) => row.resource === "clientes" && row.ownerId === ownerId)
+        .map((client) => ({
+          clientId: client.id, name: client.name,
+          projects: records.rows.filter((row) => row.resource === "projetos" &&
+            row.ownerId === ownerId && row.clientId === client.id).length,
+        }));
+    },
+  };
+  return { users, records, statistics, app: createApp({ users, records, statistics, jwtSecret: secret }) };
 }
 async function session(app: ReturnType<typeof createApp>, data = account) {
   await request(app).post("/api/auth/register").send(data).expect(201);
@@ -301,10 +311,11 @@ test("projeto exige cliente existente e cliente vinculado não pode ser excluíd
   await request(app).delete(`/api/clientes/${client.id}`).auth(token, auth).expect(409);
 });
 test("falhas inesperadas não expõem detalhes internos", async () => {
-  const { users, records } = fixture();
+  const { users, records, statistics } = fixture();
   const app = createApp({
     users,
     records,
+    statistics,
     jwtSecret: secret,
     health: async () => {
       throw new Error("detalhe privado");
@@ -312,4 +323,29 @@ test("falhas inesperadas não expõem detalhes internos", async () => {
   });
   const response = await request(app).get("/api/health").expect(500);
   assert.equal(JSON.stringify(response.body).includes("privado"), false);
+});
+
+test("estatísticas exigem sessão, incluem clientes sem projetos e isolam contas", async () => {
+  const { app } = fixture();
+  await request(app).get("/api/statistics/portfolio").expect(401);
+  const token = await session(app);
+  const other = await session(app, { ...account, email: "outra@example.com", cpf: "11144477735" });
+  const auth = { type: "bearer" as const };
+  const createClient = async (name: string) => (await request(app).post("/api/clientes").auth(token, auth)
+    .send({ name, description: "Base estatística", email: `${name}@example.com` }).expect(201)).body.id as number;
+  const first = await createClient("Primeiro");
+  await createClient("Segundo");
+  await request(app).post("/api/projetos").auth(token, auth)
+    .send({ name: "Site", description: "Projeto de teste", clientId: first }).expect(201);
+  const result = await request(app).get("/api/statistics/portfolio").auth(token, auth).expect(200);
+  assert.equal(result.headers["cache-control"], "no-store");
+  assert.equal(result.body.totalClients, 2);
+  assert.equal(result.body.totalProjects, 1);
+  assert.equal(result.body.mean, 0.5);
+  assert.equal(result.body.median, 0.5);
+  assert.equal(result.body.populationStdDev, 0.5);
+  assert.equal(result.body.inactiveClients, 1);
+  const isolated = await request(app).get("/api/statistics/portfolio").auth(other, auth).expect(200);
+  assert.equal(isolated.body.totalClients, 0);
+  assert.deepEqual(isolated.body.clients, []);
 });

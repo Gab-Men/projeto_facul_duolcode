@@ -11,6 +11,7 @@ export default function Dashboard() {
           ["servicos", "Serviços", "Soluções que sua empresa oferece."],
           ["parceiros", "Parceiros", "Contatos que colaboram com seu trabalho."],
           ["projetos", "Projetos", "Trabalhos vinculados aos seus clientes."],
+          ["estatisticas", "Estatísticas", "Gráficos e indicadores da distribuição de projetos por cliente."],
         ].map(([slug, name, text]) => (
           <Link className="admin-card" href={`/painel/${slug}`} key={slug}>
             <h2>{name}</h2>

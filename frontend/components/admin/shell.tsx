@@ -22,6 +22,7 @@ function Protected({ children }: { children: ReactNode }) {
     ["/painel/servicos", "Serviços"],
     ["/painel/parceiros", "Parceiros"],
     ["/painel/projetos", "Projetos"],
+    ["/painel/estatisticas", "Estatísticas"],
     ["/painel/perfil", "Meu perfil"],
   ];
   return (

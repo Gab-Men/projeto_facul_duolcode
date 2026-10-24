@@ -1,4 +1,8 @@
 import type { BusinessRecord, Page, RecordInput, Resource, User } from "../domain/validation.js";
+import type { ClientLoad } from "../domain/portfolio-analysis.js";
+export interface StatisticsRepository {
+  clientLoads(ownerId: number): Promise<ClientLoad[]>;
+}
 export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   findById(id: number): Promise<User | null>;

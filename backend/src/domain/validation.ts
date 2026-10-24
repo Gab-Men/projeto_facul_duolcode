@@ -1,5 +1,6 @@
 import { z } from "zod";
 export function validCpf(value: string): boolean {
+  if (!/^[\d.\-\s]+$/.test(value)) return false;
   const cpf = value.replace(/\D/g, "");
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
   for (let size = 9; size <= 10; size++) {
@@ -11,19 +12,20 @@ export function validCpf(value: string): boolean {
   return true;
 }
 export const email = z
-  .string()
+  .string({ error: "Informe um e-mail válido." })
   .trim()
   .toLowerCase()
-  .max(254)
+  .max(254, "O e-mail deve ter no máximo 254 caracteres.")
   .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "E-mail inválido.");
 export const password = z
-  .string()
+  .string({ error: "Informe uma senha." })
   .min(8, "Use pelo menos 8 caracteres.")
-  .max(128)
+  .max(128, "A senha deve ter no máximo 128 caracteres.")
   .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, "A senha precisa de maiúscula, minúscula e número.");
-const name = z.string().trim().min(2, "Informe ao menos 2 caracteres.").max(120);
+const name = z.string({ error: "Informe o nome." }).trim()
+  .min(2, "O nome precisa ter pelo menos 2 caracteres.").max(120, "O nome deve ter no máximo 120 caracteres.");
 const cpf = z
-  .string()
+  .string({ error: "Informe um CPF válido." })
   .refine(validCpf, "CPF inválido.")
   .transform((value) => value.replace(/\D/g, ""));
 export const registerSchema = z.object({ name, email, password, cpf }).strict();

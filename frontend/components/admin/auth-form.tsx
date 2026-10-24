@@ -11,8 +11,14 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   const [busy, setBusy] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setMessage("");
     const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    if (register && name.length < 2) {
+      setMessage("Informe um nome com pelo menos 2 caracteres.");
+      return;
+    }
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
     const cpf = String(form.get("cpf") ?? "");
@@ -27,7 +33,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
       if (register) {
         await api("/auth/register", {
           method: "POST",
-          body: JSON.stringify({ name: form.get("name"), email, password, cpf }),
+          body: JSON.stringify({ name, email, password, cpf }),
         });
         router.push("/login?cadastro=ok");
       } else {

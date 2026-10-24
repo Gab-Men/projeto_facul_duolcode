@@ -4,12 +4,14 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { AuthService } from "./services/auth-service.js";
 import { RecordService } from "./services/record-service.js";
-import type { RecordRepository, UserRepository } from "./repositories/contracts.js";
+import type { RecordRepository, UserRepository, StatisticsRepository } from "./repositories/contracts.js";
+import { StatisticsService } from "./services/statistics-service.js";
 import { resourceNames, type PublicUser } from "./domain/validation.js";
 import { AppError } from "./errors/app-error.js";
 export function createApp(deps: {
   users: UserRepository;
   records: RecordRepository;
+  statistics: StatisticsRepository;
   jwtSecret: string;
   health?: () => Promise<void>;
 }) {
@@ -22,6 +24,7 @@ export function createApp(deps: {
   app.use(helmet(), express.json({ limit: "16kb" }));
   const auth = new AuthService(deps.users, deps.jwtSecret);
   const records = new RecordService(deps.records);
+  const statistics = new StatisticsService(deps.statistics);
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 30,
@@ -44,6 +47,10 @@ export function createApp(deps: {
   const current = (locals: Record<string, unknown>) => locals.user as PublicUser;
   app.get("/api/users/me", (_req, res) => {
     res.json(current(res.locals));
+  });
+  app.get("/api/statistics/portfolio", async (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json(await statistics.portfolio(current(res.locals).id));
   });
   app.put("/api/users/me", async (req, res) => {
     res.json(await auth.update(current(res.locals).id, req.body));

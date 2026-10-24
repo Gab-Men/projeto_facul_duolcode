@@ -9,6 +9,7 @@ Prefixo: `/api`. JSON como entrada e saída. Todas as rotas de usuários e recur
 | `POST /auth/login` | Entrada: email, password. Retorna token e usuário |
 | `GET /users/me` | Usuário associado ao token |
 | `PUT /users/me` | Entrada: name, cpf, password. Todos obrigatórios. Rejeita email, id e campos desconhecidos |
+| `GET /statistics/portfolio` | Exige sessão. Totais, média, mediana, desvio padrão populacional, maior participação, clientes e histograma da conta atual. Resposta sem cache |
 | `GET /:recurso?page=1&pageSize=10` | `{ items, total, page, pageSize }`; pageSize entre 1 e 50 |
 | `GET /:recurso/:id` | Registro pertencente ao usuário autenticado |
 | `POST /:recurso` | Cria registro; status 201 |

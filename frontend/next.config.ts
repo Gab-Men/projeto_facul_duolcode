@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
+const frontendRoot = fileURLToPath(new URL(".", import.meta.url));
 const config: NextConfig = {
   output: "standalone",
+  outputFileTracingRoot: frontendRoot,
+  turbopack: { root: frontendRoot },
   async rewrites() {
     return [
       {

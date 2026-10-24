@@ -1,127 +1,91 @@
-# DuolCode — base para desenvolvimento em dupla
+# DuolCode
 
-Esta é uma **cópia independente** do site institucional, preparada para evoluir por etapas conforme a rubrica. A pasta original não foi modificada. Não houve publicação na internet nem cópia de credenciais, histórico Git ou configuração de hospedagem do projeto original.
+Projeto acadêmico de **Gabriel Barreto Men e Pedro Henrique Rossato**.
 
-## O que já tem código
+Site institucional com área de gestão autenticada, cadastro de usuários, quatro CRUDs e análise descritiva da carteira de clientes.
 
-- Site público original com início, serviços, quem somos, parceiros e contato.
-- Área de gestão simples: cadastro de conta, login, logout e edição do próprio perfil.
-- JWT, senha com hash scrypt e salt, CPF/e-mail/senha validados no front-end e no back-end.
-- Quatro CRUDs: clientes, serviços, parceiros e projetos; cada projeto pertence a um cliente.
-- Listagens paginadas e telas separadas de criação/edição.
-- Cada usuário enxerga somente seus registros. Os dois integrantes podem desenvolver o mesmo código, mas contas distintas não compartilham dados nesta primeira versão.
-- MySQL, Docker Compose e Nginx configurados em arquivos; apenas Nginx publica a porta 8080.
-- Testes de regras e rotas, instruções para agentes e três skills específicas do projeto.
+## Executar com Docker
 
-Os cadastros da área de gestão **ainda não alimentam as páginas públicas** de serviços e parceiros. Essa integração é uma próxima etapa intencional. Não há anexos, notificações, relatórios, permissões por cargo ou recursos comerciais extras.
-
-## Começar pelo site visual, sem banco
-
-Requisito: Node.js 22.18 ou superior.
-
-Abra um terminal **nesta pasta**, a que contém este README:
-
-```powershell
-npm --prefix frontend ci
-npm --prefix frontend run dev
-```
-
-Abra http://localhost:3000. As páginas públicas e os formulários aparecem; cadastro/login e dados precisam da API e do MySQL para funcionar. Não há login fictício ou sucesso simulado.
-
-## Rodar o sistema completo
-
-Requisitos: Node.js 22.18+ e Docker Desktop aberto, usando containers Linux.
-
-Na pasta deste README:
+Requisitos: Docker Desktop aberto com containers Linux e Node.js 22.18 ou superior para os scripts locais. Abra um terminal na pasta deste README:
 
 ```powershell
 node scripts/setup-env.ts
 docker compose up --build -d
-```
-
-O primeiro comando gera senhas e a chave JWT localmente, sem exibi-las e sem sobrescrever uma configuração existente. O segundo instala dependências dentro dos containers, cria o banco e inicia os serviços. A primeira execução pode demorar alguns minutos.
-
-Abra **http://localhost:8080** e escolha **Área de gestão → Criar minha conta**. Não existe conta ou senha padrão. Use dados de teste válidos para a apresentação acadêmica; não use dados reais de terceiros.
-
-Para acompanhar a inicialização:
-
-```powershell
 docker compose ps
-docker compose logs --tail=60 backend
 ```
 
-Para parar preservando os dados:
+Acesse **http://localhost:8080**. Escolha Área de gestão → Criar minha conta. Não existe usuário padrão. O cadastro exige nome, e-mail, CPF válido de teste e senha de 8 a 128 caracteres com maiúscula, minúscula e número.
+
+O script de configuração preserva o .env existente e não exibe credenciais. O Docker instala as dependências e inicia Nginx, frontend, backend e MySQL. Na primeira execução o download e a compilação podem demorar.
+
+Para parar e voltar, preservando os dados:
 
 ```powershell
-docker compose down
+docker compose stop
+docker compose start
 ```
 
-O volume `mysql_data` preserva os registros. **Não acrescente `-v`** se quiser manter os dados. O script `database/init.sql` só é executado automaticamente na criação de um volume vazio. Alterações futuras no esquema devem usar migrações; não apague dados para atualizar o banco.
+Depois de alterar o código, execute novamente `docker compose up --build -d`.
 
-## Trabalhar no código
+**[Passo a passo do Docker e diagnóstico](docs/DOCKER.md)**
 
-```text
-DuolCode-base/
-  frontend/
-    app/                 Páginas públicas e rotas da área de gestão
-    components/          Cabeçalho, rodapé e componentes de formulários/listagens
-    contexts/            Usuário logado disponível globalmente
-    lib/                 Cliente da API, tipos e validações
-    public/              Imagens originais
-  backend/
-    src/
-      domain/            Entidades, tipos e validações
-      services/          Regras de autenticação e cadastros
-      repositories/      Contratos e consultas ao MySQL
-      errors/            Erros com mensagens controladas
-      app.ts             Rotas e middleware
-      server.ts          Conexão com banco e inicialização
-    tests/               Testes com banco substituto em memória
-  database/init.sql      Tabelas e relacionamentos
-  nginx/default.conf     Encaminhamento de requisições
-  docker-compose.yml     Serviços, redes e volume
-  .agents/skills/        Três skills específicas
-  docs/                  Etapas, rubrica e testes manuais
-```
+## O que está implementado
 
-Para instalar e testar o back-end sem MySQL:
+- Cadastro com nome, e-mail, senha e CPF; validações no front-end e no back-end; confirmação de senha e retorno ao login.
+- Senhas com scrypt e salt aleatório; login com JWT; contexto do usuário e edição do próprio perfil.
+- CRUDs de clientes, serviços, parceiros e projetos, com autenticação, paginação, rotas separadas e vínculo projeto/cliente.
+- Dados isolados por conta; o navegador não escolhe ownerId.
+- Estatísticas da carteira: barras por cliente, histograma, totais, média, mediana, desvio padrão populacional e maior participação.
+- Modelagem da análise com campo privado nativo, construtor validado, getters de cálculo e cópias para proteger o estado.
+- MySQL com volume persistente e rede interna; somente Nginx publica a porta 8080.
+
+As estatísticas aparecem em **Painel → Estatísticas**. Use clientes e projetos da sua conta; não existem valores fictícios preenchidos automaticamente. Consulte a base simulada de apresentação e as fórmulas em [docs/SPRINT.md](docs/SPRINT.md).
+
+Os registros privados de serviços/parceiros ainda não alimentam as páginas públicas. Esse comportamento é uma etapa futura.
+
+## Verificar
+
+Para testes de domínio/API sem banco real:
 
 ```powershell
 npm --prefix backend ci
 npm test
 npm run build:api
+```
+
+Para compilar o frontend fora do Docker:
+
+```powershell
+npm --prefix frontend ci
 npm run build:web
 ```
 
-O teste usa repositórios em memória **apenas dentro dos testes**. A aplicação real usa MySQL.
+Para testar a API real com MySQL, depois de subir o Docker:
 
-Para desenvolver o conjunto completo nesta primeira etapa, faça mudanças e execute novamente `docker compose up --build -d`. O Compose usa builds de produção; não tem atualização automática ao salvar. Para estudar só as telas, use o modo visual acima.
+```powershell
+npm run verify:sprint
+```
 
-Se preferirem rodar API e frontend fora do Docker, será necessário um MySQL local com o esquema de `database/init.sql`, credenciais no `.env` da raiz e porta 3306. Execute `npm --prefix backend run dev` e `npm --prefix frontend run dev` em dois terminais. Não exponha a porta do MySQL no Compose principal apenas para facilitar esse fluxo: a rubrica pede que somente Nginx fique exposto.
+O último comando cria contas isoladas e dados simulados de verificação. Ele testa cadastro, validações, restrições de duplicidade, estatísticas e isolamento. Não imprime senhas, tokens ou CPF; não substitui a conferência dos formulários no navegador.
 
-## Como dividir o trabalho
+## Organização e entrega
 
-Comecem por [docs/ETAPAS.md](docs/ETAPAS.md). Façam alterações pequenas, cada pessoa em sua branch, e revisem o código uma da outra. Não foi criado um repositório remoto nem feito push.
+- frontend/app: páginas; frontend/components/admin: formulários e gráficos; frontend/contexts: sessão.
+- backend/src/domain: validação, entidades e cálculos; services: regras; repositories: contratos e SQL.
+- database/init.sql: tabelas e relacionamentos existentes; as estatísticas não exigem mudança do esquema.
+- [Detalhes da sprint e roteiro de defesa](docs/SPRINT.md)
+- [Rotas da API](docs/API.md)
+- [Rubrica e evidências](docs/RUBRICA.md)
+- [Roteiro manual](docs/TESTE-MANUAL.md)
+- [Resultados e imagens da validação](docs/VALIDACAO-SPRINT.md)
+- [PDF de entrega](output/pdf/entrega-sprint-duolcode.pdf)
 
-- [Situação da rubrica](docs/RUBRICA.md)
-- [Roteiro de validação com MySQL](docs/TESTE-MANUAL.md)
-- [Rotas e campos da API](docs/API.md)
+Repositório: https://github.com/Gab-Men/projeto_facul_duolcode
 
-## Validação desta entrega
+As alterações locais precisam ser revisadas e enviadas ao GitHub antes da entrega. A aplicação é executada localmente; abrir localhost:8080 não publica um site na internet.
 
-- Front-end compilado para produção.
-- Back-end compilado com TypeScript estrito.
-- 11 testes automatizados passaram, cobrindo autenticação, CPF, permissões por usuário, CRUDs, paginação, perfil e relacionamentos.
-- Telas de login e cadastro inspecionadas no navegador.
-- **Docker/MySQL/Nginx não executados aqui:** Docker não está disponível no computador de preparação. A integração SQL, a persistência após reinício e o isolamento de rede precisam ser conferidos seguindo o roteiro manual.
-- Esta base não representa nota integral na rubrica. Consulte as pendências documentadas.
+## Cuidados com dados
 
-## Decisões simples desta base
+Não envie .env ao GitHub ou ao professor. Não remova o volume mysql_data para atualizar o projeto. `docker compose down` preserva os registros; a opção -v remove o volume.
 
-O site usava Vinext/Cloudflare. Nesta cópia, as páginas foram reaproveitadas em Next.js com servidor Node para facilitar o conjunto front-end + API + MySQL + Nginx solicitado pela rubrica. Fontes usam alternativas locais; a compilação não depende de baixar fontes do Google.
-
-O token fica no localStorage conforme a rubrica, com validade de duas horas. Recuperação de senha, confirmação de e-mail, revogação imediata de sessões e HTTPS para publicação ficam para etapas futuras; o ambiente desta entrega é local.
-
-As regras em AGENTS.md orientam o agente e os arquivos ignore evitam incluir segredos por acidente. Elas **não bloqueiam tecnicamente** a leitura de arquivos por ferramentas com acesso à pasta. A proteção efetiva de `.env` deve ser configurada no ambiente do agente e comprovada separadamente.
-
-Referências técnicas: [Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting) e [tratamento de erros no Express 5](https://expressjs.com/en/5x/guide/error-handling/).
+AGENTS.md e os arquivos ignore orientam o uso e evitam inclusão acidental de segredos, mas não bloqueiam tecnicamente acesso de ferramentas ao sistema de arquivos. A rubrica completa possui itens de outras etapas; este incremento se concentra na sprint descrita em docs/SPRINT.md.

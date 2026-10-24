@@ -1,6 +1,6 @@
 import mysql from "mysql2/promise";
 import { createApp } from "./app.js";
-import { MysqlRecordRepository, MysqlUserRepository } from "./repositories/mysql.js";
+import { MysqlRecordRepository, MysqlUserRepository, MysqlStatisticsRepository } from "./repositories/mysql.js";
 function required(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Configure ${name}.`);
@@ -17,6 +17,7 @@ const db = mysql.createPool({
 const app = createApp({
   users: new MysqlUserRepository(db),
   records: new MysqlRecordRepository(db),
+  statistics: new MysqlStatisticsRepository(db),
   jwtSecret: required("JWT_SECRET"),
   health: async () => {
     await db.query("SELECT 1");

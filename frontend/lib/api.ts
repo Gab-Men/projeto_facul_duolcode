@@ -9,14 +9,20 @@ export class ApiError extends Error {
 }
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY);
-  const response = await fetch(`/api${path}`, {
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-  });
+    });
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+    throw new ApiError("Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.", 0);
+  }
   if (!response.ok) {
     const body = await response
       .json()

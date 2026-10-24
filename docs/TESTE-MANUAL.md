@@ -1,6 +1,6 @@
 # Validação com banco real
 
-Use o ambiente local e dados de teste. Esta lista ainda precisa ser executada pela dupla em uma máquina com Docker.
+Use o ambiente local e dados de teste. A sprint de cadastro e estatísticas foi verificada em 22/10/2026; os fluxos adicionais abaixo continuam como roteiro para as próximas revisões.
 
 1. Execute os dois comandos de inicialização do README e espere os serviços ficarem saudáveis.
 2. Abra `http://localhost:8080`; confira as cinco páginas públicas e o link Área de gestão.
@@ -20,3 +20,11 @@ Use o ambiente local e dados de teste. Esta lista ainda precisa ser executada pe
 Não execute comandos que imprimam o conteúdo do `.env` ou a configuração interpolada com senhas. Não use `docker compose down -v` durante o teste de persistência.
 
 Registre o resultado real, a data, quem testou e qualquer falha encontrada. Se algum passo falhar, não marque o critério correspondente como concluído.
+
+## Incremento da sprint: estatísticas
+
+15. Entre em uma conta sem clientes: os indicadores derivados devem mostrar Sem dados e a página deve oferecer o primeiro cadastro.
+16. Cadastre cinco clientes simulados com 0, 1, 2, 3 e 4 projetos. Abra Estatísticas e confira total 10, média 2, mediana 2, desvio 1,41 e participação 40%.
+17. Confira barras com origem em zero, histograma com todos os clientes e tabela da base completa. Abra Como os indicadores são calculados.
+18. Entre em outra conta: nenhum nome ou indicador da conta anterior deve aparecer.
+19. Execute npm run verify:sprint para validar o SQL real e os casos de cadastro. O teste mantém dados simulados em contas isoladas.
