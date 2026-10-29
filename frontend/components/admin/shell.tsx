@@ -29,14 +29,14 @@ function Protected({ children }: { children: ReactNode }) {
     <div className="admin">
       <header className="admin-header">
         <Link href="/">DuolCode</Link>
-        <span>Olá, {user.name}</span>
+        <span className="admin-user"><span className="admin-avatar" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</span> Olá, {user.name}</span>
         <button onClick={logout} className="admin-secondary">
           Sair
         </button>
       </header>
       <nav className="admin-nav" aria-label="Gestão">
         {links.map(([href, label]) => (
-          <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>
+          <Link key={href} href={href} aria-current={(href === "/painel" ? pathname === href : pathname.startsWith(href + "/") || pathname === href) ? "page" : undefined}>
             {label}
           </Link>
         ))}

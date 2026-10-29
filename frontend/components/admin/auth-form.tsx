@@ -9,6 +9,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -52,7 +54,15 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   }
   return (
     <main className="admin auth-page">
-      <div className="admin-card">
+      <div className="auth-layout">
+      <aside className="auth-story">
+        <Link href="/" className="auth-brand">duolcode<span>®</span></Link>
+        <div><p className="auth-kicker">MENOS RUÍDO. MAIS DIREÇÃO.</p>
+        <h2>Boas ideias.<br />Grandes<br /><em>conexões.</em></h2>
+        <p>Seu espaço para conectar clientes, organizar projetos e enxergar novas possibilidades.</p></div>
+        <div className="auth-story-footer"><span>01 / ORGANIZE</span><span>02 / CONECTE</span><span>03 / EVOLUA</span></div>
+      </aside>
+      <div className="admin-card auth-card">
         <Link href="/">← Voltar ao site</Link>
         <p className="admin-eyebrow">DUOLCODE · GESTÃO</p>
         <h1>{register ? "Criar conta" : "Entrar"}</h1>
@@ -70,23 +80,27 @@ export function AuthForm({ register = false }: { register?: boolean }) {
           <Field
             name="password"
             label="Senha"
-            type="password"
+            type={visible ? "text" : "password"}
             minLength={register ? 8 : 1}
             maxLength={128}
             autoComplete={register ? "new-password" : "current-password"}
+            onChange={(event) => setPasswordValue(event.target.value)}
           />
           {register && (
             <>
-              <small>Use maiúscula, minúscula e número, com pelo menos 8 caracteres.</small>
+              <ul className="password-rules" aria-label="Requisitos da senha">
+                {[["8 caracteres", passwordValue.length >= 8], ["Maiúscula", /[A-Z]/.test(passwordValue)], ["Minúscula", /[a-z]/.test(passwordValue)], ["Número", /\d/.test(passwordValue)]].map(([label, valid]) => <li key={String(label)} data-valid={valid}>{valid ? "✓" : "○"} {label}</li>)}
+              </ul>
               <Field
                 name="confirm"
                 label="Confirmar senha"
-                type="password"
+                type={visible ? "text" : "password"}
                 maxLength={128}
                 autoComplete="new-password"
               />
             </>
           )}
+          <button className="password-toggle" type="button" aria-pressed={visible} onClick={() => setVisible(!visible)}>{visible ? "Ocultar senhas" : "Mostrar senhas"}</button>
           <Feedback message={message} />
           <button disabled={busy} className="admin-button">
             {busy ? "Aguarde…" : register ? "Cadastrar" : "Entrar"}
@@ -95,6 +109,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
         <Link href={register ? "/login" : "/cadastro"}>
           {register ? "Já tenho uma conta" : "Criar minha conta"}
         </Link>
+      </div>
       </div>
     </main>
   );
