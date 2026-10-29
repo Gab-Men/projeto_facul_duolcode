@@ -127,6 +127,8 @@ test("entidades protegem estado interno e projeto exige cliente", () => {
   const snapshot = entity.toRecord();
   snapshot.name = "Outro";
   assert.equal(entity.toRecord().name, "Teste");
+  Object.assign(entity, { state: { name: "Invasão", description: "Outro valor" } });
+  assert.equal(entity.toRecord().name, "Teste");
   assert.throws(() => new Project(input));
 });
 test("cadastro protege senha, evita duplicados e login emite JWT verificável", async () => {

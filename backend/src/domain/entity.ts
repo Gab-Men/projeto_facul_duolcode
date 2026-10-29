@@ -2,12 +2,12 @@ import { AppError } from "../errors/app-error.js";
 import type { RecordInput } from "./validation.js";
 // Shared invariant: entities expose snapshots, never their internal mutable object.
 export class Entity {
-  private readonly state: RecordInput;
+  readonly #state: Readonly<RecordInput>;
   constructor(data: RecordInput) {
-    this.state = { ...data, name: data.name.trim() };
+    this.#state = Object.freeze({ ...data, name: data.name.trim() });
   }
   toRecord(): RecordInput {
-    return { ...this.state };
+    return { ...this.#state };
   }
 }
 export class Project extends Entity {

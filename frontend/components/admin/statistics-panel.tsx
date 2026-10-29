@@ -71,7 +71,7 @@ export function StatisticsPanel() {
     return () => controller.abort();
   }, [revision]);
   return <>
-    <p className="admin-eyebrow">PROBABILIDADE E ESTATÍSTICA · ANÁLISE DESCRITIVA</p>
+    <p className="admin-eyebrow">INTELIGÊNCIA DA CARTEIRA · ANÁLISE DESCRITIVA</p>
     <div className="admin-title"><h1>Estatísticas da carteira</h1>
       <button className="admin-secondary" disabled={loading} onClick={() => setRevision((value) => value + 1)}>
         {loading ? "Atualizando…" : "Atualizar análise"}
@@ -85,6 +85,11 @@ export function StatisticsPanel() {
         {" "}Consulta em {new Date(report.generatedAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília).
         {" "}Os indicadores usam todos os clientes, incluindo os que têm zero projetos.</p>
       <Metrics report={report} />
+      {report.totalClients > 0 && <section className="portfolio-health admin-card" aria-label="Clientes com e sem projetos">
+        <div><h2>Relacionamentos em movimento</h2><p>{report.activeClients} clientes com projetos · {report.inactiveClients} sem projetos</p></div>
+        <div className="health-indicator"><strong>{formatNumber(report.activeClients / report.totalClients * 100)}%</strong><span>dos clientes têm projetos</span></div>
+        <progress max={report.totalClients} value={report.activeClients} aria-label="Proporção de clientes com projetos" />
+      </section>}
       {report.totalClients === 0 ? <section className="admin-card stats-findings">
         <h2>Sua análise começa com os cadastros</h2>
         <p>Cadastre clientes e vincule projetos a eles. Os gráficos serão calculados com esses dados,
