@@ -31,8 +31,6 @@ const cpf = z
 export const registerSchema = z.object({ name, email, password, cpf }).strict();
 export const profileSchema = z.object({ name, password, cpf }).strict();
 export const loginSchema = z.object({ email, password: z.string().min(1).max(128) }).strict();
-export const resourceNames = ["clientes", "servicos", "parceiros", "projetos"] as const;
-export type Resource = (typeof resourceNames)[number];
 const base = { name, description: z.string().trim().min(2, "Descreva o registro.").max(1000) };
 export const schemas = {
   clientes: z.object({ ...base, email }).strict(),
@@ -48,31 +46,9 @@ export const schemas = {
     .strict(),
   projetos: z.object({ ...base, clientId: z.number().int().positive() }).strict(),
 };
-export interface RecordInput {
-  name: string;
-  description: string;
-  email?: string;
-  website?: string;
-  clientId?: number;
-}
-export interface BusinessRecord extends RecordInput {
-  id: number;
-}
-export interface Page<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  cpf: string;
-  passwordHash: string;
-}
-export type PublicUser = Omit<User, "passwordHash">;
-export function publicUser(user: User): PublicUser {
-  const { passwordHash, ...safe } = user;
-  return safe;
-}
+// Compatibility for existing consumers; new code imports models directly.
+export { resourceNames } from "./records.js";
+export type { Resource, RecordInput, BusinessRecord } from "./records.js";
+export type { Page } from "./pagination.js";
+export { publicUser } from "./user.js";
+export type { User, PublicUser } from "./user.js";

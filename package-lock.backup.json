@@ -1,0 +1,15 @@
+{
+  "name": "duolcode-base",
+  "version": "0.1.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "duolcode-base",
+      "version": "0.1.0",
+      "engines": {
+        "node": ">=22.18.0"
+      }
+    }
+  }
+}

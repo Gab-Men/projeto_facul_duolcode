@@ -7,8 +7,8 @@ function required(name: string): string {
   return value;
 }
 const db = mysql.createPool({
-  host: process.env.DB_HOST ?? "127.0.0.1",
-  port: Number(process.env.DB_PORT ?? 3306),
+  host: process.env["DB_HOST"] ?? "127.0.0.1",
+  port: Number(process.env["DB_PORT"] ?? 3306),
   user: required("MYSQL_USER"),
   password: required("MYSQL_PASSWORD"),
   database: required("MYSQL_DATABASE"),
@@ -24,8 +24,8 @@ const app = createApp({
   },
 });
 const server = app.listen(
-  Number(process.env.PORT ?? 3001),
-  process.env.BIND_HOST ?? "127.0.0.1",
+  Number(process.env["PORT"] ?? 3001),
+  process.env["BIND_HOST"] ?? "127.0.0.1",
   () => console.log("API DuolCode pronta na porta 3001."),
 );
 for (const signal of ["SIGTERM", "SIGINT"] as const)

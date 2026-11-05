@@ -1,35 +1,24 @@
-import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
 import jwt from "jsonwebtoken";
 import { AppError } from "../errors/app-error.js";
-import { loginSchema, profileSchema, publicUser, registerSchema } from "../domain/validation.js";
+import { loginSchema, profileSchema, registerSchema } from "../domain/validation.js";
 import type { UserRepository } from "../repositories/contracts.js";
-const derive = promisify(scrypt);
-async function hash(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const key = (await derive(password, salt, 64)) as Buffer;
-  return `${salt}:${key.toString("hex")}`;
-}
-async function verify(password: string, stored: string): Promise<boolean> {
-  const [salt, expected] = stored.split(":");
-  const actual = (await derive(password, salt, 64)) as Buffer;
-  const expectedBytes = Buffer.from(expected, "hex");
-  return actual.length === expectedBytes.length && timingSafeEqual(actual, expectedBytes);
-}
+import { publicUser, type AuthSession, type PublicUser } from "../domain/user.js";
+import { hashPassword, verifyPassword } from "./password.js";
+
 export class AuthService {
   constructor(
     private readonly users: UserRepository,
     private readonly secret: string,
   ) {}
-  async register(input: unknown) {
+  async register(input: unknown): Promise<PublicUser> {
     const { password, ...data } = registerSchema.parse(input);
     if (await this.users.findByEmail(data.email)) throw new AppError(409, "E-mail já cadastrado.");
-    return publicUser(await this.users.create({ ...data, passwordHash: await hash(password) }));
+    return publicUser(await this.users.create({ ...data, passwordHash: await hashPassword(password) }));
   }
-  async login(input: unknown) {
+  async login(input: unknown): Promise<AuthSession> {
     const data = loginSchema.parse(input);
     const user = await this.users.findByEmail(data.email);
-    if (!user || !(await verify(data.password, user.passwordHash)))
+    if (!user || !(await verifyPassword(data.password, user.passwordHash)))
       throw new AppError(401, "E-mail ou senha incorretos.");
     const token = jwt.sign({}, this.secret, {
       subject: String(user.id),
@@ -40,7 +29,7 @@ export class AuthService {
     });
     return { token, user: publicUser(user) };
   }
-  async authenticate(header?: string) {
+  async authenticate(header?: string): Promise<PublicUser> {
     if (!header?.startsWith("Bearer "))
       throw new AppError(401, "Entre na sua conta para continuar.");
     try {
@@ -57,8 +46,8 @@ export class AuthService {
       throw new AppError(401, "Sua sessão expirou. Entre novamente.");
     }
   }
-  async update(id: number, input: unknown) {
+  async update(id: number, input: unknown): Promise<PublicUser> {
     const { password, ...data } = profileSchema.parse(input);
-    return publicUser(await this.users.update(id, { ...data, passwordHash: await hash(password) }));
+    return publicUser(await this.users.update(id, { ...data, passwordHash: await hashPassword(password) }));
   }
 }

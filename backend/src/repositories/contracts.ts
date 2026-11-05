@@ -1,4 +1,6 @@
-import type { BusinessRecord, Page, RecordInput, Resource, User } from "../domain/validation.js";
+import type { BusinessRecord, RecordInput, Resource } from "../domain/records.js";
+import type { Page } from "../domain/pagination.js";
+import type { NewUser, User, UserUpdate } from "../domain/user.js";
 import type { ClientLoad } from "../domain/portfolio-analysis.js";
 export interface StatisticsRepository {
   clientLoads(ownerId: number): Promise<ClientLoad[]>;
@@ -6,8 +8,8 @@ export interface StatisticsRepository {
 export interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   findById(id: number): Promise<User | null>;
-  create(data: Omit<User, "id">): Promise<User>;
-  update(id: number, data: Pick<User, "name" | "cpf" | "passwordHash">): Promise<User>;
+  create(data: NewUser): Promise<User>;
+  update(id: number, data: UserUpdate): Promise<User>;
 }
 export interface RecordRepository {
   list(
@@ -17,12 +19,12 @@ export interface RecordRepository {
     pageSize: number,
   ): Promise<Page<BusinessRecord>>;
   find(resource: Resource, ownerId: number, id: number): Promise<BusinessRecord | null>;
-  create(resource: Resource, ownerId: number, data: RecordInput): Promise<BusinessRecord>;
-  update(
-    resource: Resource,
+  create<R extends Resource>(resource: R, ownerId: number, data: RecordInput<NoInfer<R>>): Promise<BusinessRecord>;
+  update<R extends Resource>(
+    resource: R,
     ownerId: number,
     id: number,
-    data: RecordInput,
+    data: RecordInput<NoInfer<R>>,
   ): Promise<BusinessRecord>;
   remove(resource: Resource, ownerId: number, id: number): Promise<void>;
 }

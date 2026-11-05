@@ -57,7 +57,10 @@ export class PortfolioAnalysis {
     if (!this.#clients.length) return null;
     const values = this.#clients.map((client) => client.projects).sort((a, b) => a - b);
     const middle = Math.floor(values.length / 2);
-    return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+    const upper = values[middle];
+    const lower = values[middle - 1];
+    if (upper === undefined) return null;
+    return values.length % 2 || lower === undefined ? upper : (lower + upper) / 2;
   }
   get populationStdDev(): number | null {
     const mean = this.mean;
@@ -75,7 +78,11 @@ export class PortfolioAnalysis {
     const bins = Array.from({ length: Math.floor(maximum / width) + 1 }, (_, index) => ({
       from: index * width, to: (index + 1) * width - 1, clients: 0,
     }));
-    for (const client of this.#clients) bins[Math.floor(client.projects / width)].clients++;
+    for (const client of this.#clients) {
+      const bin = bins[Math.floor(client.projects / width)];
+      if (!bin) throw new Error("Intervalo da análise estatística não encontrado.");
+      bin.clients++;
+    }
     return bins;
   }
   toReport(): PortfolioReport {
@@ -84,6 +91,7 @@ export class PortfolioAnalysis {
       (a, b) => b.projects - a.projects || a.clientId - b.clientId,
     );
     const activeClients = clients.filter((client) => client.projects > 0).length;
+    const largest = clients[0];
     return {
       generatedAt: new Date().toISOString(),
       totalClients: clients.length,
@@ -93,7 +101,7 @@ export class PortfolioAnalysis {
       mean: this.mean,
       median: this.median,
       populationStdDev: this.populationStdDev,
-      largestClientShare: totalProjects ? clients[0].projects / totalProjects * 100 : null,
+      largestClientShare: totalProjects && largest ? largest.projects / totalProjects * 100 : null,
       clients,
       histogram: this.histogram(),
     };

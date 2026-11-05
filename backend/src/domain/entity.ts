@@ -1,5 +1,5 @@
 import { AppError } from "../errors/app-error.js";
-import type { RecordInput } from "./validation.js";
+import type { RecordInput } from "./records.js";
 // Shared invariant: entities expose snapshots, never their internal mutable object.
 export class Entity {
   readonly #state: Readonly<RecordInput>;
@@ -12,7 +12,7 @@ export class Entity {
 }
 export class Project extends Entity {
   constructor(data: RecordInput) {
-    if (!data.clientId || !Number.isInteger(data.clientId))
+    if (!("clientId" in data) || !Number.isSafeInteger(data.clientId) || data.clientId <= 0)
       throw new AppError(400, "Selecione um cliente.");
     super(data);
   }
