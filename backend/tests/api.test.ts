@@ -12,7 +12,7 @@ import {
 } from "../src/domain/validation.js";
 import type { UserRepository, RecordRepository } from "../src/repositories/contracts.js";
 import { AppError, NotFoundError } from "../src/errors/app-error.js";
-import { Entity, Project } from "../src/domain/entity.js";
+import { ServiceEntity, ProjectEntity } from "../src/domain/entity.js";
 import { validateAccount } from "../../frontend/lib/validation.js";
 
 // Test doubles only: production always uses MySQL.
@@ -122,14 +122,14 @@ test("CPF e validações do front-end rejeitam dados inválidos", () => {
 });
 test("entidades protegem estado interno e projeto exige cliente", () => {
   const input = { name: " Teste ", description: "Descrição" };
-  const entity = new Entity(input);
+  const entity = new ServiceEntity(input);
   input.name = "Alterado";
   const snapshot = entity.toRecord();
   snapshot.name = "Outro";
   assert.equal(entity.toRecord().name, "Teste");
   Object.assign(entity, { state: { name: "Invasão", description: "Outro valor" } });
   assert.equal(entity.toRecord().name, "Teste");
-  assert.throws(() => new Project(input));
+  assert.throws(() => new ProjectEntity({ ...input, clientId: 0 }));
 });
 test("cadastro protege senha, evita duplicados e login emite JWT verificável", async () => {
   const { app, users } = fixture();

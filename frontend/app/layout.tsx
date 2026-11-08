@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ScrollEffects from "../components/scroll-effects";
-import { WhatsAppButton } from "../components/site-shell";
+import ScrollEffects from "../components/site/scroll-effects";
+import { WhatsAppButton } from "../components/site/site-shell";
 export const metadata: Metadata = {
   title: "DuolCode",
   description: "Sites e sistemas para empresas.",

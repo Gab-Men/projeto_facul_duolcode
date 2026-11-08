@@ -26,5 +26,9 @@ Use os arquivos correspondentes em `.agents/skills` quando a tarefa se aplicar:
 - `duolcode-interface`: telas, sessão e formulários.
 - `duolcode-rubrica`: conferência por evidência e divisão em etapas.
 
-## Limite real
-Estas regras orientam o agente; não são uma barreira de sistema operacional. `.gitignore` e `.dockerignore` evitam inclusão acidental, mas não proíbem leitura por ferramentas. Para comprovar bloqueio técnico de segredos na rubrica, configure um ambiente de agente sem acesso ao arquivo real. Não declare este item como integralmente atendido só por este documento.
+## Bloqueio técnico de segredos
+- `.agents/claude-settings.json` (instalado em `.claude/settings.json` com `npm run setup:agents`) nega leitura/edição de `.env` e chaves, e comandos como `printenv` e `docker compose config`.
+- `.agents/hooks/protect-secrets.ts` (PreToolUse) recusa qualquer ferramenta cujo caminho ou comando aponte para `.env`/chaves ou imprima o ambiente.
+- `.cursorignore`, `.aiexclude`, `.geminiignore`, `.codeiumignore` e `.aiderignore` excluem os mesmos arquivos em outras ferramentas.
+- Comprovação: `npm run verify:agents`. Não remova nem enfraqueça essas proteções.
+- Limite: ferramentas que ignoram hooks e arquivos de exclusão continuam dependendo destas regras; para máxima garantia, rode o agente numa cópia sem o `.env` real.

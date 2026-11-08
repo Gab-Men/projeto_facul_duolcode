@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { api, errorMessage, TOKEN_KEY } from "../../lib/api";
 import { validateAccount } from "../../lib/validation";
 import { Field, Feedback } from "./field";
+import { PasswordRules } from "./password-rules";
 export function AuthForm({ register = false }: { register?: boolean }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -88,9 +89,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
           />
           {register && (
             <>
-              <ul className="password-rules" aria-label="Requisitos da senha">
-                {[["8 caracteres", passwordValue.length >= 8], ["Maiúscula", /[A-Z]/.test(passwordValue)], ["Minúscula", /[a-z]/.test(passwordValue)], ["Número", /\d/.test(passwordValue)]].map(([label, valid]) => <li key={String(label)} data-valid={valid}>{valid ? "✓" : "○"} {label}</li>)}
-              </ul>
+              <PasswordRules value={passwordValue} />
               <Field
                 name="confirm"
                 label="Confirmar senha"

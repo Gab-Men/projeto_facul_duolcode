@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mapClientLoad, mapCount, mapRecord, mapUser } from "../src/repositories/mysql/row-mappers.js";
 import { hashPassword, verifyPassword } from "../src/services/password.js";
-import { Project } from "../src/domain/entity.js";
+import { ProjectEntity as Project } from "../src/domain/entity.js";
 
 test("mapeamento SQL valida tipos, relacionamentos e contagens sem expor a linha inválida", () => {
   const project = { id: 1, name: "Site", description: "Projeto institucional", clientId: 2 };

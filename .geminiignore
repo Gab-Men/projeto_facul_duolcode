@@ -1,0 +1,9 @@
+# Arquivos que ferramentas de IA não devem indexar nem ler (segredos).
+.env
+.env.*
+!.env.example
+**/.env
+*.pem
+*.key
+*.p12
+*.pfx

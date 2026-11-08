@@ -66,3 +66,69 @@ export function WorkloadHistogram({ report }: { report: PortfolioReport }) {
     </figure>
   );
 }
+
+/** Pareto chart: columns = projects per client (descending); line = cumulative share (%). */
+export function ParetoChart({ report }: { report: PortfolioReport }) {
+  const titleId = useId();
+  const descId = useId();
+  const points = report.pareto.slice(0, 12);
+  if (!points.length) return null;
+  const left = 60;
+  const right = 800;
+  const top = 30;
+  const bottom = 230;
+  const height = bottom - top;
+  const step = (right - left) / points.length;
+  const maxProjects = Math.max(1, ...points.map((point) => point.projects));
+  const line = points
+    .map((point, index) => `${left + index * step + step / 2},${bottom - point.cumulativeShare / 100 * height}`)
+    .join(" ");
+  const eighty = bottom - 0.8 * height;
+  return (
+    <figure className="admin-card stats-chart stats-chart-wide">
+      <figcaption>
+        <h2>Concentração da carteira (Pareto)</h2>
+        <p>
+          Colunas: projetos por cliente, do maior para o menor. Linha: percentual acumulado dos
+          projetos. Quanto mais rápido a linha chega a 80%, mais concentrada é a carteira.
+        </p>
+      </figcaption>
+      <svg viewBox="0 0 860 300" role="img" aria-labelledby={`${titleId} ${descId}`}>
+        <title id={titleId}>Gráfico de Pareto dos projetos por cliente</title>
+        <desc id={descId}>{points.map((point) =>
+          `${point.name}: ${point.projects} projetos, acumulado ${formatNumber(point.cumulativeShare)}%`).join("; ")}</desc>
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const y = bottom - tick / 100 * height;
+          return <g key={tick}>
+            <line x1={left} x2={right} y1={y} y2={y} stroke="#d6dfd4" />
+            <text x={right + 6} y={y + 4}>{tick}%</text>
+          </g>;
+        })}
+        <text x={left - 8} y={top + 4} textAnchor="end">{maxProjects}</text>
+        <text x={left - 8} y={bottom + 4} textAnchor="end">0</text>
+        {points.map((point, index) => {
+          const barHeight = point.projects / maxProjects * height;
+          const x = left + index * step;
+          return <g key={point.clientId}>
+            <rect x={x + 3} y={bottom - barHeight} width={step - 6} height={barHeight} fill="#246449">
+              <title>{`${point.name}: ${point.projects} projetos`}</title>
+            </rect>
+            <text x={x + step / 2} y={bottom + 18} textAnchor="middle">{String(index + 1)}</text>
+          </g>;
+        })}
+        <line x1={left} x2={right} y1={eighty} y2={eighty} stroke="#c58b1a" strokeDasharray="6 4" />
+        <text x={right - 6} y={eighty - 6} textAnchor="end">referência 80%</text>
+        <polyline points={line} fill="none" stroke="#0f2f22" strokeWidth="2.5" />
+        {points.map((point, index) => (
+          <circle key={point.clientId} cx={left + index * step + step / 2}
+            cy={bottom - point.cumulativeShare / 100 * height} r="4" fill="#0f2f22" />
+        ))}
+        <text x={(left + right) / 2} y="275" textAnchor="middle">Posição do cliente no ranking de projetos</text>
+        <text transform="translate(15 130) rotate(-90)" textAnchor="middle">Projetos</text>
+      </svg>
+      {report.pareto.length > points.length && (
+        <p className="stats-axis">Exibindo os 12 primeiros de {report.pareto.length} clientes; o acumulado considera todos.</p>
+      )}
+    </figure>
+  );
+}

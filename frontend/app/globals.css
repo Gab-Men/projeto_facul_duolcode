@@ -1827,6 +1827,8 @@ body:has(.admin) .whatsapp-fixed {
 .stats-method summary { cursor: pointer; font-weight: bold; }
 .stats-method p:first-of-type { margin-top: 18px; }
 @media (max-width: 900px) { .stats-charts { grid-template-columns: 1fr; } }
+.stats-chart-wide { margin: 0 0 24px; }
+.stats-chart-wide svg { max-width: 980px; margin: 0 auto; }
 @media (max-width: 650px) { .stats-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .stats-metric { padding: 14px; } }
 @media (max-width: 650px) {
   .admin {

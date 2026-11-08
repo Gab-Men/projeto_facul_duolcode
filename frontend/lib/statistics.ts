@@ -3,6 +3,9 @@ export interface ClientLoad {
   name: string;
   projects: number;
 }
+export interface ParetoPoint extends ClientLoad {
+  cumulativeShare: number;
+}
 export interface PortfolioReport {
   generatedAt: string;
   totalClients: number;
@@ -13,6 +16,10 @@ export interface PortfolioReport {
   median: number | null;
   populationStdDev: number | null;
   largestClientShare: number | null;
+  quartiles: { q1: number; q3: number; iqr: number } | null;
+  coefficientOfVariation: number | null;
+  topFifthShare: number | null;
+  pareto: ParetoPoint[];
   clients: ClientLoad[];
   histogram: { from: number; to: number; clients: number }[];
 }

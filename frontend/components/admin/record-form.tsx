@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { api, errorMessage } from "../../lib/api";
-import { resources, type BusinessRecord, type Page, type Resource } from "../../lib/resources";
+import { fetchAllClients, resources, type BusinessRecord, type Resource } from "../../lib/resources";
 import { Field, Feedback } from "./field";
 export function RecordForm({ resource, id }: { resource: Resource; id?: number }) {
   const router = useRouter();
@@ -22,14 +22,7 @@ export function RecordForm({ resource, id }: { resource: Resource; id?: number }
           if (active) setRecord(result);
         }
         if (resource === "projetos") {
-          const items: BusinessRecord[] = [];
-          let page = 1;
-          while (true) {
-            const result = await api<Page<BusinessRecord>>(`/clientes?page=${page}&pageSize=50`);
-            items.push(...result.items);
-            if (!active || items.length >= result.total || result.items.length === 0) break;
-            page++;
-          }
+          const items = await fetchAllClients(() => active);
           if (active) setClients(items);
         }
       } catch (error) {
@@ -112,51 +105,7 @@ export function RecordForm({ resource, id }: { resource: Resource; id?: number }
                 defaultValue={record?.description}
               />
             </label>
-            {resource === "clientes" && (
-              <Field
-                name="email"
-                label="E-mail do cliente"
-                type="email"
-                maxLength={254}
-                defaultValue={record?.email}
-              />
-            )}
-            {resource === "parceiros" && (
-              <Field
-                name="website"
-                label="Site do parceiro"
-                type="url"
-                placeholder="https://exemplo.com"
-                maxLength={500}
-                defaultValue={record?.website}
-              />
-            )}
-            {resource === "projetos" && (
-              <>
-                <label className="admin-field" htmlFor="clientId">
-                  Cliente
-                  <select
-                    id="clientId"
-                    name="clientId"
-                    required
-                    defaultValue={record?.clientId ?? ""}
-                  >
-                    <option value="">Selecione um cliente</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {clients.length === 0 && (
-                  <p>
-                    Cadastre um <Link href="/painel/clientes/novo">cliente</Link> antes de criar um
-                    projeto.
-                  </p>
-                )}
-              </>
-            )}
+            <ResourceFields resource={resource} record={record} clients={clients} />
             <button
               className="admin-button"
               disabled={busy || (resource === "projetos" && clients.length === 0)}
@@ -165,6 +114,65 @@ export function RecordForm({ resource, id }: { resource: Resource; id?: number }
             </button>
           </form>
         )
+      )}
+    </>
+  );
+}
+
+interface ResourceFieldsProps {
+  resource: Resource;
+  record: BusinessRecord | null;
+  clients: BusinessRecord[];
+}
+
+/** Fields that only exist for one resource (client e-mail, partner site, project client). */
+function ResourceFields({ resource, record, clients }: ResourceFieldsProps) {
+  return (
+    <>
+      {resource === "clientes" && (
+        <Field
+          name="email"
+          label="E-mail do cliente"
+          type="email"
+          maxLength={254}
+          defaultValue={record?.email}
+        />
+      )}
+      {resource === "parceiros" && (
+        <Field
+          name="website"
+          label="Site do parceiro"
+          type="url"
+          placeholder="https://exemplo.com"
+          maxLength={500}
+          defaultValue={record?.website}
+        />
+      )}
+      {resource === "projetos" && (
+        <>
+          <label className="admin-field" htmlFor="clientId">
+            Cliente
+            <select
+              id="clientId"
+              name="clientId"
+              required
+              defaultValue={record?.clientId ?? ""}
+            >
+              <option value="">Selecione um cliente</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {clients.length === 0 && (
+            <p>
+              Cadastre um <Link href="/painel/clientes/novo">cliente</Link> antes de criar um
+              projeto.
+            </p>
+          )}
+        </>
       )}
     </>
   );

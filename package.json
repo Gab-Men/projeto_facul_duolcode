@@ -11,6 +11,9 @@
     "test": "npm --prefix backend test",
     "verify:sprint": "node scripts/verify-sprint.ts",
     "build:api": "npm --prefix backend run build",
-    "build:web": "npm --prefix frontend run build"
+    "build:web": "npm --prefix frontend run build",
+    "verify:agents": "node scripts/verify-agents.ts",
+    "verify:rubrica": "node scripts/verify-rubrica.ts",
+    "setup:agents": "node scripts/setup-agents.ts"
   }
 }

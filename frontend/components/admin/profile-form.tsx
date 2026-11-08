@@ -4,10 +4,12 @@ import { useAuth, type User } from "../../contexts/auth-context";
 import { api, errorMessage } from "../../lib/api";
 import { validateAccount } from "../../lib/validation";
 import { Field, Feedback } from "./field";
+import { PasswordRules } from "./password-rules";
 export function ProfileForm() {
   const { user, setUser } = useAuth();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -31,6 +33,7 @@ export function ProfileForm() {
         const input = formElement.elements.namedItem(field);
         if (input instanceof HTMLInputElement) input.value = "";
       }
+      setPasswordValue("");
       setMessage("Perfil atualizado.");
     } catch (error) {
       setMessage(errorMessage(error));
@@ -56,8 +59,9 @@ export function ProfileForm() {
           minLength={8}
           maxLength={128}
           autoComplete="new-password"
+          onChange={(event) => setPasswordValue(event.target.value)}
         />
-        <small>Use maiúscula, minúscula e número.</small>
+        <PasswordRules value={passwordValue} />
         <Field
           name="confirm"
           label="Confirmar senha"

@@ -63,3 +63,26 @@ test("construtor rejeita contagens inválidas e clientes duplicados", () => {
     { clientId: 1, name: "Duplicado", projects: 1 },
   ]));
 });
+test("quartis, coeficiente de variação e curva de Pareto medem a concentração", () => {
+  // Projetos: 0, 1, 2, 3, 4, 10 → total 20
+  const report = new PortfolioAnalysis([2, 0, 10, 1, 4, 3].map((projects, index) => ({
+    clientId: index + 1, name: `Cliente ${index + 1}`, projects,
+  }))).toReport();
+  // Interpolação linear (QUARTIL.INC): Q1 = 1,25; Q3 = 3,75
+  assert.deepEqual(report.quartiles, { q1: 1.25, q3: 3.75, iqr: 2.5 });
+  const mean = 20 / 6;
+  const std = Math.sqrt([2, 0, 10, 1, 4, 3].reduce((sum, value) => sum + (value - mean) ** 2, 0) / 6);
+  assert.ok(Math.abs(report.coefficientOfVariation! - std / mean * 100) < 1e-9);
+  // 20% de 6 clientes → 2 maiores (10 + 4) = 70% dos projetos
+  assert.equal(report.topFifthShare, 70);
+  assert.deepEqual(report.pareto.map((point) => point.cumulativeShare), [50, 70, 85, 95, 100, 100]);
+  assert.equal(report.pareto[0]!.name, "Cliente 3");
+});
+test("indicadores de concentração ficam sem dados quando não há projetos", () => {
+  const report = new PortfolioAnalysis([{ clientId: 1, name: "A", projects: 0 }]).toReport();
+  assert.equal(report.coefficientOfVariation, null);
+  assert.equal(report.topFifthShare, null);
+  assert.deepEqual(report.pareto, []);
+  assert.deepEqual(report.quartiles, { q1: 0, q3: 0, iqr: 0 });
+  assert.equal(new PortfolioAnalysis([]).toReport().quartiles, null);
+});

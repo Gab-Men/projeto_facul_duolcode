@@ -56,7 +56,7 @@ Os testes de comportamento usam repositórios em memória e validam também os m
 
 Roteiro curto: mostrar um recurso com campo obrigatório no schema; mostrar o tipo inferido e a rejeição estática de campo ausente; seguir a chamada rota → serviço → contrato → adaptador; mostrar a validação da linha SQL; demonstrar um erro esperado e um erro interno sem vazamento de detalhes.
 
-Frontend, AGENTS.md, skills e isolamento de segredos não foram modificados nesta etapa. Não foi criada herança, classe abstrata ou setter apenas para pontuar na rubrica.
+
 
 ## Verificação da etapa — 04/11/2026
 
@@ -68,3 +68,27 @@ Frontend, AGENTS.md, skills e isolamento de segredos não foram modificados nest
 - Backend e banco saudáveis; página inicial em `http://localhost:8080` respondeu HTTP 200.
 
 As verificações de integração criaram contas/dados simulados identificados como teste. Não houve remoção de dados anteriores. Nenhuma dependência foi adicionada ou atualizada nesta etapa.
+
+## Etapa 08/11/2026: modelagem do domínio, POO e SOLID
+
+A regra "projeto precisa de um cliente da mesma conta" estava como `if (resource === "projetos")` dentro do serviço. Ela foi movida para o domínio, o que justifica a herança com reuso real:
+
+```
+BusinessEntity<R>  (abstract)        ← #state privado e congelado, toRecord() devolve cópia
+ ├─ ClientEntity    normalize(): e-mail em minúsculas
+ ├─ ServiceEntity   (usa o comportamento padrão)
+ ├─ PartnerEntity   validate(): site precisa ser http/https
+ └─ ProjectEntity   validate(): clientId positivo · relations: [cliente obrigatório]
+```
+
+- **Template Method:** o construtor da base executa sempre os mesmos passos (normalização comum → `normalize` → `validate`); as subclasses só sobrescrevem os ganchos (`override`, exigido por `noImplicitOverride`).
+- **Polimorfismo:** `RecordService.save` percorre `entity.relations` sem saber qual recurso está salvando. Clientes, serviços e parceiros devolvem `[]`; projeto devolve o cliente obrigatório.
+- **Open/Closed:** `createEntity(resource, data)` usa um mapa tipado `{ [R in Resource]: (data) => BusinessEntity<R> }`. Um quinto recurso entra registrando a classe no mapa — o serviço não muda.
+- **Liskov:** qualquer subclasse é usada onde se espera `BusinessEntity`; nenhuma lança erro em métodos herdados nem muda o contrato de `toRecord()`.
+- **Generics sem cast:** `parseRecord<R>` e `createEntity<R>` usam tipos mapeados correlacionados, então `save("projetos", …)` produz `RecordInput<"projetos">` sem `as`.
+- **Exceções:** `AppError` agora tem `ValidationError` (400), `UnauthorizedError` (401), `NotFoundError` (404) e `ConflictError` (409); `name` vem de `new.target.name`.
+- **Estatística:** `PortfolioAnalysis` ganhou getters de cálculo `quartiles`, `coefficientOfVariation` e `topFifthShare`, um método privado nativo `#sortedByProjects()` e o relatório de Pareto.
+
+Testes: `backend/tests/domain.test.ts` (fábrica, polimorfismo, hooks, estado congelado, exceções) e novos casos em `statistics.test.ts`.
+
+**Pergunta provável na defesa:** "Por que classe abstrata aqui?" → Porque as quatro entidades compartilham estado protegido, normalização e validação, e diferem só em regras pontuais; a base não faz sentido sozinha (não existe "registro genérico").

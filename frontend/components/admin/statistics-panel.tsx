@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../../lib/api";
 import { formatNumber, type PortfolioReport } from "../../lib/statistics";
-import { ClientBars, WorkloadHistogram } from "./portfolio-charts";
+import { ClientBars, ParetoChart, WorkloadHistogram } from "./portfolio-charts";
 import { Feedback } from "./field";
 
 function Metrics({ report }: { report: PortfolioReport }) {
@@ -14,11 +14,17 @@ function Metrics({ report }: { report: PortfolioReport }) {
     ["Mediana", report.median, "Valor central da distribuição ordenada"],
     ["Desvio padrão", report.populationStdDev, "Dispersão da população de clientes"],
     ["Maior participação", report.largestClientShare, "Parcela dos projetos do maior cliente"],
+    ["Quartis (Q1 · Q3)", report.quartiles, "25% dos clientes têm até Q1; 75% têm até Q3"],
+    ["Coeficiente de variação", report.coefficientOfVariation, "Desvio padrão ÷ média × 100"],
+    ["Top 20% dos clientes", report.topFifthShare, "Parcela dos projetos dos 20% maiores clientes"],
   ] as const;
+  const percent = new Set(["Maior participação", "Coeficiente de variação", "Top 20% dos clientes"]);
   return <div className="stats-metrics">
     {metrics.map(([label, value, explanation]) => <article className="admin-card stats-metric" key={label}>
       <h2>{label}</h2>
-      <strong>{formatNumber(value)}{label === "Maior participação" && value !== null ? "%" : ""}</strong>
+      <strong>{typeof value === "object" && value !== null
+        ? `${formatNumber(value.q1)} · ${formatNumber(value.q3)}`
+        : `${formatNumber(value)}${percent.has(label) && value !== null ? "%" : ""}`}</strong>
       <small>{explanation}</small>
     </article>)}
   </div>;
@@ -35,6 +41,14 @@ function Findings({ report }: { report: PortfolioReport }) {
       <p>A média é {formatNumber(report.mean)} e a mediana é {formatNumber(report.median)} projetos por cliente.
         O desvio padrão de {formatNumber(report.populationStdDev)} mostra quanto as quantidades se
         afastam da média.</p>
+      <p>Os 20% maiores clientes concentram {formatNumber(report.topFifthShare)}% dos projetos
+        {report.topFifthShare !== null && report.topFifthShare >= 80
+          ? " — padrão de Pareto (80/20): a carteira depende de poucos clientes e vale diversificar."
+          : " — a carteira não segue o padrão 80/20 de forte concentração."}
+        {" "}Coeficiente de variação: {formatNumber(report.coefficientOfVariation)}%
+        {report.coefficientOfVariation !== null && report.coefficientOfVariation > 50
+          ? " (alta dispersão relativa: volumes muito desiguais entre clientes)."
+          : " (dispersão relativa moderada)."}</p>
     </> : <p>Ainda não há projetos. Cadastre trabalhos vinculados aos clientes para analisar o volume.</p>}
     <p><strong>Limite da análise:</strong> quantidade de projetos não representa faturamento,
       horas trabalhadas ou satisfação. Os dados mostram a carteira atual; não permitem concluir
@@ -97,6 +111,7 @@ export function StatisticsPanel() {
         <Link className="admin-button" href="/painel/clientes/novo">Cadastrar primeiro cliente</Link>
       </section> : <>
         <div className="stats-charts"><ClientBars report={report} /><WorkloadHistogram report={report} /></div>
+        <ParetoChart report={report} />
         <Findings report={report} />
         <DataTable report={report} />
       </>}
@@ -110,9 +125,12 @@ export function StatisticsPanel() {
           à média. Maior participação = projetos do maior cliente ÷ total de projetos × 100.</p>
         <p>Sem clientes, média, mediana e desvio padrão ficam sem dados. Sem projetos, a participação
           não é calculada. O histograma tem até seis intervalos de largura igual, iniciando em zero.</p>
-        <p>Barras comparam categorias; o histograma mostra a distribuição da variável numérica.
-          Séries temporais, dispersão e regressão exigiriam datas ou outras variáveis que esta etapa
-          ainda não coleta.</p>
+        <p>Quartis por interpolação linear (mesmo método de QUARTIL.INC no Excel): posição =
+          (n − 1) × p nos valores ordenados. Coeficiente de variação = desvio padrão ÷ média × 100.
+          Top 20% = projetos dos ⌈20% × clientes⌉ maiores ÷ total de projetos × 100.</p>
+        <p>Barras comparam categorias; o histograma mostra a distribuição da variável numérica; o
+          gráfico de Pareto (colunas + linha acumulada) mostra a concentração. Séries temporais,
+          dispersão e regressão exigiriam datas ou outras variáveis que esta etapa ainda não coleta.</p>
       </details>
     </>}
   </>;

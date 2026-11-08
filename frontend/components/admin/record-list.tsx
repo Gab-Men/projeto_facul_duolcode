@@ -2,8 +2,23 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../../lib/api";
-import { resources, type BusinessRecord, type Page, type Resource } from "../../lib/resources";
+import { fetchAllClients, resources, type BusinessRecord, type Page, type Resource } from "../../lib/resources";
 import { Feedback } from "./field";
+import { Pagination } from "./pagination";
+const PAGE_SIZE = 10;
+
+/** Resource-specific column shown next to name and description. */
+function detailColumn(
+  resource: Resource,
+  clientNames: ReadonlyMap<number, string>,
+): { title: string; value: (record: BusinessRecord) => string } | null {
+  if (resource === "clientes") return { title: "E-mail", value: (record) => record.email ?? "" };
+  if (resource === "parceiros") return { title: "Site", value: (record) => record.website ?? "" };
+  if (resource === "projetos")
+    return { title: "Cliente", value: (record) => clientNames.get(record.clientId ?? 0) ?? "—" };
+  return null;
+}
+
 export function RecordList({ resource }: { resource: Resource }) {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Page<BusinessRecord> | null>(null);
@@ -11,11 +26,25 @@ export function RecordList({ resource }: { resource: Resource }) {
   const [version, refresh] = useState(0);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clientNames, setClientNames] = useState<ReadonlyMap<number, string>>(new Map());
+  useEffect(() => {
+    if (resource !== "projetos") return;
+    let active = true;
+    // Names are a convenience; the listing still works if this request fails.
+    void fetchAllClients(() => active)
+      .then((clients) => {
+        if (active) setClientNames(new Map(clients.map((client) => [client.id, client.name])));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [resource]);
   useEffect(() => {
     let active = true;
     setLoading(true);
     setMessage("");
-    void api<Page<BusinessRecord>>(`/${resource}?page=${page}&pageSize=10`)
+    void api<Page<BusinessRecord>>(`/${resource}?page=${page}&pageSize=${PAGE_SIZE}`)
       .then((result) => {
         if (active) setData(result);
       })
@@ -46,7 +75,7 @@ export function RecordList({ resource }: { resource: Resource }) {
       setBusyId(null);
     }
   }
-  const pages = Math.max(1, Math.ceil((data?.total ?? 0) / 10));
+  const detail = detailColumn(resource, clientNames);
   return (
     <>
       <div className="admin-title">
@@ -68,6 +97,7 @@ export function RecordList({ resource }: { resource: Resource }) {
                   <tr>
                     <th>Nome</th>
                     <th>Descrição</th>
+                    {detail && <th>{detail.title}</th>}
                     <th>Ações</th>
                   </tr>
                 </thead>
@@ -76,6 +106,7 @@ export function RecordList({ resource }: { resource: Resource }) {
                     <tr key={record.id}>
                       <td>{record.name}</td>
                       <td>{record.description}</td>
+                      {detail && <td>{detail.value(record)}</td>}
                       <td>
                         <div className="admin-actions">
                           <Link href={`/painel/${resource}/${record.id}/editar`}>Editar</Link>
@@ -92,17 +123,7 @@ export function RecordList({ resource }: { resource: Resource }) {
                 <p className="admin-empty">Nenhum registro nesta página. Cadastre o primeiro.</p>
               )}
             </div>
-            <div className="admin-pagination">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                Anterior
-              </button>
-              <span>
-                Página {page} de {pages}
-              </span>
-              <button disabled={page >= pages} onClick={() => setPage(page + 1)}>
-                Próxima
-              </button>
-            </div>
+            <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} onChange={setPage} />
           </>
         )
       )}

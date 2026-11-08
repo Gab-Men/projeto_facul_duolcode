@@ -9,6 +9,19 @@ export function validCpf(value: string): boolean {
   }
   return true;
 }
+export interface PasswordCheck {
+  label: string;
+  valid: boolean;
+}
+/** Password strength rules shown to the user; must match the API schema. */
+export function passwordChecks(password: string): PasswordCheck[] {
+  return [
+    { label: "8 caracteres", valid: password.length >= 8 },
+    { label: "Maiúscula", valid: /[A-Z]/.test(password) },
+    { label: "Minúscula", valid: /[a-z]/.test(password) },
+    { label: "Número", valid: /\d/.test(password) },
+  ];
+}
 export function validateAccount(
   data: { email?: string; cpf?: string; password: string; confirm?: string },
   full = false,

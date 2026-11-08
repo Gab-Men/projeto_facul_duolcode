@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 export default function ScrollEffects() {
   const pathname = usePathname();
   useEffect(() => {
-    const targets = document.querySelectorAll(
+    const targets = document.querySelectorAll<HTMLElement>(
       "main > section:not(.hero), .service-line, .home-process li, .values-grid article, .profile-grid article, .offer, .contact-panel",
     );
     document.body.classList.add("motion-ready");
     targets.forEach((target, index) => {
       target.classList.add("reveal");
-      (target as HTMLElement).style.setProperty(
+      target.style.setProperty(
         "--reveal-delay",
         `${Math.min(index % 4, 3) * 70}ms`,
       );

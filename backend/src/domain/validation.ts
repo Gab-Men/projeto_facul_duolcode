@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { RecordInput, Resource } from "./records.js";
 export function validCpf(value: string): boolean {
   if (!/^[\d.\-\s]+$/.test(value)) return false;
   const cpf = value.replace(/\D/g, "");
@@ -46,6 +47,18 @@ export const schemas = {
     .strict(),
   projetos: z.object({ ...base, clientId: z.number().int().positive() }).strict(),
 };
+type RecordParsers = { [R in Resource]: (input: unknown) => RecordInput<R> };
+const parsers: RecordParsers = {
+  clientes: (input) => schemas.clientes.parse(input),
+  servicos: (input) => schemas.servicos.parse(input),
+  parceiros: (input) => schemas.parceiros.parse(input),
+  projetos: (input) => schemas.projetos.parse(input),
+};
+/** Validates external input and returns data typed for the given resource. */
+export function parseRecord<R extends Resource>(resource: R, input: unknown): RecordInput<R> {
+  const parse: RecordParsers[R] = parsers[resource];
+  return parse(input);
+}
 // Compatibility for existing consumers; new code imports models directly.
 export { resourceNames } from "./records.js";
 export type { Resource, RecordInput, BusinessRecord } from "./records.js";

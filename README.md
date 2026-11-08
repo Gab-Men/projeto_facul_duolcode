@@ -35,8 +35,12 @@ Depois de alterar o código, execute novamente `docker compose up --build -d`.
 - Senhas com scrypt e salt aleatório; login com JWT; contexto do usuário e edição do próprio perfil.
 - CRUDs de clientes, serviços, parceiros e projetos, com autenticação, paginação, rotas separadas e vínculo projeto/cliente.
 - Dados isolados por conta; o navegador não escolhe ownerId.
-- Estatísticas da carteira: barras por cliente, histograma, totais, média, mediana, desvio padrão populacional e maior participação.
+- Estatísticas da carteira: barras por cliente, histograma, gráfico de Pareto, totais, média, mediana, quartis, desvio padrão populacional, coeficiente de variação, top 20% e maior participação.
 - Modelagem da análise com campo privado nativo, construtor validado, getters de cálculo e cópias para proteger o estado.
+- Domínio com classe abstrata `BusinessEntity` e uma subclasse por recurso (polimorfismo, Template Method, fábrica aberta para extensão) e exceções customizadas.
+- Componentes reutilizáveis do site público em `frontend/components/site` e da gestão em `frontend/components/admin`.
+- Guardrails técnicos para agentes de IA: `.claude/settings.json` + hook que bloqueia leitura do `.env` (`npm run setup:agents` e `npm run verify:agents`).
+- Persona e ligação de cada funcionalidade com o cliente em [docs/PERSONA.md](docs/PERSONA.md).
 - MySQL com volume persistente e rede interna; somente Nginx publica a porta 8080.
 
 As estatísticas aparecem em **Painel → Estatísticas**. Use clientes e projetos da sua conta; não existem valores fictícios preenchidos automaticamente. Consulte a base simulada de apresentação e as fórmulas em [docs/SPRINT.md](docs/SPRINT.md).
@@ -63,8 +67,12 @@ npm run build:web
 Para testar a API real com MySQL, depois de subir o Docker:
 
 ```powershell
+npm run verify:rubrica   # todos os itens de back-end da rubrica (19 verificações)
 npm run verify:sprint
+npm run verify:agents    # bloqueio de segredos para agentes de IA (não precisa de Docker)
 ```
+
+Se aparecer status 429 (limite de tentativas de login), execute `docker compose restart backend` e rode de novo.
 
 O último comando cria contas isoladas e dados simulados de verificação. Ele testa cadastro, validações, restrições de duplicidade, estatísticas e isolamento. Não imprime senhas, tokens ou CPF; não substitui a conferência dos formulários no navegador.
 

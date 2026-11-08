@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { AppError } from "../errors/app-error.js";
+import { ConflictError, UnauthorizedError } from "../errors/app-error.js";
 import { loginSchema, profileSchema, registerSchema } from "../domain/validation.js";
 import type { UserRepository } from "../repositories/contracts.js";
 import { publicUser, type AuthSession, type PublicUser } from "../domain/user.js";
@@ -12,14 +12,14 @@ export class AuthService {
   ) {}
   async register(input: unknown): Promise<PublicUser> {
     const { password, ...data } = registerSchema.parse(input);
-    if (await this.users.findByEmail(data.email)) throw new AppError(409, "E-mail já cadastrado.");
+    if (await this.users.findByEmail(data.email)) throw new ConflictError("E-mail já cadastrado.");
     return publicUser(await this.users.create({ ...data, passwordHash: await hashPassword(password) }));
   }
   async login(input: unknown): Promise<AuthSession> {
     const data = loginSchema.parse(input);
     const user = await this.users.findByEmail(data.email);
     if (!user || !(await verifyPassword(data.password, user.passwordHash)))
-      throw new AppError(401, "E-mail ou senha incorretos.");
+      throw new UnauthorizedError("E-mail ou senha incorretos.");
     const token = jwt.sign({}, this.secret, {
       subject: String(user.id),
       expiresIn: "2h",
@@ -31,7 +31,7 @@ export class AuthService {
   }
   async authenticate(header?: string): Promise<PublicUser> {
     if (!header?.startsWith("Bearer "))
-      throw new AppError(401, "Entre na sua conta para continuar.");
+      throw new UnauthorizedError("Entre na sua conta para continuar.");
     try {
       const payload = jwt.verify(header.slice(7), this.secret, {
         algorithms: ["HS256"],
@@ -43,7 +43,7 @@ export class AuthService {
       if (!user) throw new Error("missing user");
       return publicUser(user);
     } catch {
-      throw new AppError(401, "Sua sessão expirou. Entre novamente.");
+      throw new UnauthorizedError("Sua sessão expirou. Entre novamente.");
     }
   }
   async update(id: number, input: unknown): Promise<PublicUser> {
