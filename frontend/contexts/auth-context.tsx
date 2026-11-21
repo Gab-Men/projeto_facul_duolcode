@@ -1,27 +1,32 @@
 "use client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, TOKEN_KEY } from "../lib/api";
+
 export interface User {
   id: number;
   name: string;
   email: string;
   cpf: string;
 }
+
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  /** Guarda o token no localStorage e o usuário no contexto. */
+  login: (token: string, user: User) => void;
   setUser: (user: User | null) => void;
   logout: () => void;
 }
+
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/** Disponível em todo o app (layout raiz): site público e área de gestão. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
-    const expire = () => {
-      setUser(null);
-    };
+    const expire = () => setUser(null);
     const sync = (event: StorageEvent) => {
       if (event.key === TOKEN_KEY && !event.newValue) setUser(null);
     };
@@ -45,16 +50,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("storage", sync);
     };
   }, []);
+  const login = (token: string, value: User) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    setUser(value);
+  };
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
 export function useAuth() {
   const value = useContext(AuthContext);
   if (!value) throw new Error("Use AuthProvider.");

@@ -3,18 +3,27 @@ import { useState, type FormEvent } from "react";
 import { useAuth, type User } from "../../contexts/auth-context";
 import { api, errorMessage } from "../../lib/api";
 import { validateAccount } from "../../lib/validation";
-import { Field, Feedback } from "./field";
+import { Button } from "../ui/button";
+import { CpfField } from "../ui/cpf-field";
+import { Feedback, Field } from "../ui/field";
+import { PasswordFields } from "../ui/password-fields";
+
 export function ProfileForm() {
   const { user, setUser } = useAuth();
   const [message, setMessage] = useState("");
+  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formElement = event.currentTarget;
-    const form = new FormData(formElement);
-    const password = String(form.get("password"));
-    const cpf = String(form.get("cpf"));
-    const invalid = validateAccount({ cpf, password, confirm: String(form.get("confirm")) }, true);
+    const form = new FormData(event.currentTarget);
+    const data = {
+      name: String(form.get("name") ?? "").trim(),
+      cpf: String(form.get("cpf") ?? ""),
+      password: String(form.get("password") ?? ""),
+    };
+    setSaved(false);
+    const invalid = validateAccount({ ...data, confirm: String(form.get("confirm") ?? "") }, true);
     if (invalid) {
       setMessage(invalid);
       return;
@@ -22,15 +31,11 @@ export function ProfileForm() {
     setBusy(true);
     setMessage("");
     try {
-      const updated = await api<User>("/users/me", {
-        method: "PUT",
-        body: JSON.stringify({ name: form.get("name"), cpf, password }),
-      });
+      // O e-mail não é enviado: a API não permite alterá-lo.
+      const updated = await api<User>("/users/me", { method: "PUT", body: JSON.stringify(data) });
       setUser(updated);
-      for (const field of ["password", "confirm"]) {
-        const input = formElement.elements.namedItem(field);
-        if (input instanceof HTMLInputElement) input.value = "";
-      }
+      setResetKey((value) => value + 1);
+      setSaved(true);
       setMessage("Perfil atualizado.");
     } catch (error) {
       setMessage(errorMessage(error));
@@ -48,27 +53,12 @@ export function ProfileForm() {
       <form className="admin-card admin-form" onSubmit={submit}>
         <Field name="name" label="Nome" minLength={2} maxLength={120} defaultValue={user.name} />
         <Field name="email" label="E-mail" type="email" value={user.email} readOnly />
-        <Field name="cpf" label="CPF" maxLength={14} defaultValue={user.cpf} />
-        <Field
-          name="password"
-          label="Senha"
-          type="password"
-          minLength={8}
-          maxLength={128}
-          autoComplete="new-password"
-        />
-        <small>Use maiúscula, minúscula e número.</small>
-        <Field
-          name="confirm"
-          label="Confirmar senha"
-          type="password"
-          maxLength={128}
-          autoComplete="new-password"
-        />
-        <Feedback message={message} />
-        <button className="admin-button" disabled={busy}>
-          {busy ? "Salvando…" : "Salvar perfil"}
-        </button>
+        <CpfField defaultValue={user.cpf} />
+        <PasswordFields key={resetKey} mode="new" />
+        <Feedback message={message} tone={saved ? "success" : "error"} />
+        <Button loading={busy} loadingText="Salvando…">
+          Salvar perfil
+        </Button>
       </form>
     </>
   );

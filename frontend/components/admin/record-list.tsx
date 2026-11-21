@@ -1,111 +1,153 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "../../lib/api";
-import { resources, type BusinessRecord, type Page, type Resource } from "../../lib/resources";
-import { Feedback } from "./field";
+import { usePaginated } from "../../hooks/use-paginated";
+import { api, errorMessage, fetchAll } from "../../lib/api";
+import { resources, type BusinessRecord, type Resource } from "../../lib/resources";
+import { DataTable, type Column } from "../ui/data-table";
+import { Feedback } from "../ui/field";
+import { Pagination } from "../ui/pagination";
+
+/** Tela de listagem paginada usada pelos quatro CRUDs. */
 export function RecordList({ resource }: { resource: Resource }) {
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Page<BusinessRecord> | null>(null);
+  const list = usePaginated<BusinessRecord>(`/${resource}`);
+  const clientNames = useClientNames(resource === "projetos");
   const [message, setMessage] = useState("");
-  const [version, refresh] = useState(0);
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setMessage("");
-    void api<Page<BusinessRecord>>(`/${resource}?page=${page}&pageSize=10`)
-      .then((result) => {
-        if (active) setData(result);
-      })
-      .catch((error) => {
-        if (active) {
-          setData(null);
-          setMessage(errorMessage(error));
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [resource, page, version]);
   async function remove(record: BusinessRecord) {
     if (!window.confirm(`Excluir “${record.name}”? Esta ação não pode ser desfeita.`)) return;
     setBusyId(record.id);
     setMessage("");
     try {
       await api(`/${resource}/${record.id}`, { method: "DELETE" });
-      if (data?.items.length === 1 && page > 1) setPage(page - 1);
-      else refresh((value) => value + 1);
+      if (list.data?.items.length === 1 && list.page > 1) list.setPage(list.page - 1);
+      else list.reload();
     } catch (error) {
       setMessage(errorMessage(error));
     } finally {
       setBusyId(null);
     }
   }
-  const pages = Math.max(1, Math.ceil((data?.total ?? 0) / 10));
   return (
     <>
-      <div className="admin-title">
-        <h1>{resources[resource].title}</h1>
-        <Link className="admin-button" href={`/painel/${resource}/novo`}>
-          Cadastrar {resources[resource].singular}
-        </Link>
-      </div>
-      <Feedback message={message} />
-      {loading ? (
+      <ListHeader resource={resource} />
+      <Feedback message={message || list.error} />
+      {list.loading ? (
         <p role="status">Carregando registros…</p>
       ) : (
-        data && (
+        list.data && (
           <>
-            <div className="admin-table-wrap">
-              <table>
-                <caption>{data.total} registro(s) na sua conta</caption>
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Descrição</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((record) => (
-                    <tr key={record.id}>
-                      <td>{record.name}</td>
-                      <td>{record.description}</td>
-                      <td>
-                        <div className="admin-actions">
-                          <Link href={`/painel/${resource}/${record.id}/editar`}>Editar</Link>
-                          <button disabled={busyId !== null} onClick={() => void remove(record)}>
-                            {busyId === record.id ? "Excluindo…" : "Excluir"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {data.items.length === 0 && (
-                <p className="admin-empty">Nenhum registro nesta página. Cadastre o primeiro.</p>
+            <DataTable
+              rows={list.data.items}
+              columns={columnsFor(resource, clientNames)}
+              rowKey={(record) => record.id}
+              caption={`${list.data.total} registro(s) na sua conta`}
+              emptyMessage="Nenhum registro nesta página. Cadastre o primeiro."
+              actions={(record) => (
+                <RowActions
+                  editHref={`/painel/${resource}/${record.id}/editar`}
+                  deleting={busyId === record.id}
+                  disabled={busyId !== null}
+                  onDelete={() => void remove(record)}
+                />
               )}
-            </div>
-            <div className="admin-pagination">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                Anterior
-              </button>
-              <span>
-                Página {page} de {pages}
-              </span>
-              <button disabled={page >= pages} onClick={() => setPage(page + 1)}>
-                Próxima
-              </button>
-            </div>
+            />
+            <Pagination page={list.page} totalPages={list.totalPages} onChange={list.setPage} />
           </>
         )
       )}
     </>
   );
+}
+
+function ListHeader({ resource }: { resource: Resource }) {
+  return (
+    <div className="admin-title">
+      <h1>{resources[resource].title}</h1>
+      <Link className="admin-button" href={`/painel/${resource}/novo`}>
+        Cadastrar {resources[resource].singular}
+      </Link>
+    </div>
+  );
+}
+
+function RowActions({
+  editHref,
+  deleting,
+  disabled,
+  onDelete,
+}: {
+  editHref: string;
+  deleting: boolean;
+  disabled: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <>
+      <Link href={editHref}>Editar</Link>
+      <button type="button" disabled={disabled} onClick={onDelete}>
+        {deleting ? "Excluindo…" : "Excluir"}
+      </button>
+    </>
+  );
+}
+
+/** Colunas de cada cadastro; projetos mostram o cliente vinculado. */
+function columnsFor(
+  resource: Resource,
+  clientNames: Map<number, string>,
+): Column<BusinessRecord>[] {
+  const name: Column<BusinessRecord> = { header: "Nome", cell: (record) => record.name };
+  const description: Column<BusinessRecord> = {
+    header: "Descrição",
+    cell: (record) => record.description,
+  };
+  switch (resource) {
+    case "clientes":
+      return [name, { header: "E-mail", cell: (record) => record.email }, description];
+    case "parceiros":
+      return [
+        name,
+        {
+          header: "Site",
+          cell: (record) => (
+            <a href={record.website} target="_blank" rel="noopener noreferrer">
+              {record.website}
+            </a>
+          ),
+        },
+        description,
+      ];
+    case "projetos":
+      return [
+        name,
+        {
+          header: "Cliente",
+          cell: (record) => clientNames.get(record.clientId ?? 0) ?? "Carregando…",
+        },
+        description,
+      ];
+    default:
+      return [name, description];
+  }
+}
+
+/** Nomes dos clientes, para exibir o relacionamento na lista de projetos. */
+function useClientNames(enabled: boolean): Map<number, string> {
+  const [names, setNames] = useState<Map<number, string>>(new Map());
+  useEffect(() => {
+    if (!enabled) return;
+    let active = true;
+    fetchAll<BusinessRecord>("/clientes")
+      .then((clients) => {
+        if (active) setNames(new Map(clients.map((client) => [client.id, client.name])));
+      })
+      .catch(() => {
+        if (active) setNames(new Map());
+      });
+    return () => {
+      active = false;
+    };
+  }, [enabled]);
+  return names;
 }

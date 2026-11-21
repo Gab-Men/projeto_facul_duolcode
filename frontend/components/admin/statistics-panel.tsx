@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../../lib/api";
-import { formatNumber, type PortfolioReport } from "../../lib/statistics";
+import { formatNumber, type ClientLoad, type PortfolioReport } from "../../lib/statistics";
 import { ClientBars, WorkloadHistogram } from "./portfolio-charts";
-import { Feedback } from "./field";
+import { DataTable, type Column } from "../ui/data-table";
+import { Feedback } from "../ui/field";
 
 function Metrics({ report }: { report: PortfolioReport }) {
   const metrics = [
@@ -42,17 +43,24 @@ function Findings({ report }: { report: PortfolioReport }) {
   </section>;
 }
 
-function DataTable({ report }: { report: PortfolioReport }) {
-  return <div className="admin-table-wrap">
-    <table>
-      <caption>Base completa da análise: {report.totalClients} clientes desta conta</caption>
-      <thead><tr><th scope="col">Cliente</th><th scope="col">Projetos</th><th scope="col">Participação nos projetos</th></tr></thead>
-      <tbody>{report.clients.map((client) => <tr key={client.clientId}>
-        <th scope="row">{client.name}</th><td>{client.projects}</td>
-        <td>{report.totalProjects ? `${formatNumber(client.projects / report.totalProjects * 100)}%` : "Sem projetos"}</td>
-      </tr>)}</tbody>
-    </table>
-  </div>;
+function ClientsTable({ report }: { report: PortfolioReport }) {
+  const share = (client: ClientLoad) =>
+    report.totalProjects
+      ? `${formatNumber((client.projects / report.totalProjects) * 100)}%`
+      : "Sem projetos";
+  const columns: Column<ClientLoad>[] = [
+    { header: "Cliente", cell: (client) => client.name, rowHeader: true },
+    { header: "Projetos", cell: (client) => client.projects },
+    { header: "Participação nos projetos", cell: share },
+  ];
+  return (
+    <DataTable
+      rows={report.clients}
+      columns={columns}
+      rowKey={(client) => client.clientId}
+      caption={`Base completa da análise: ${report.totalClients} clientes desta conta`}
+    />
+  );
 }
 
 export function StatisticsPanel() {
@@ -98,7 +106,7 @@ export function StatisticsPanel() {
       </section> : <>
         <div className="stats-charts"><ClientBars report={report} /><WorkloadHistogram report={report} /></div>
         <Findings report={report} />
-        <DataTable report={report} />
+        <ClientsTable report={report} />
       </>}
       <details className="admin-card stats-method">
         <summary>Como os indicadores são calculados</summary>

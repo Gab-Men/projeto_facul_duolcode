@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, LayoutTemplate, MonitorCog, Workflow } from "lucide-react";
+import { ArrowRight, Check, LayoutTemplate, MonitorCog, Workflow } from "lucide-react";
 import { Footer, Header } from "../../components/site-shell";
+import { PageHero } from "../../components/site/page-hero";
 
 const offers = [
   {
@@ -46,85 +47,103 @@ const offers = [
   },
 ];
 
+const deliverySteps = [
+  "Diagnóstico e direcionamento",
+  "Design pensado para sua marca",
+  "Desenvolvimento responsivo",
+  "Revisão e publicação",
+];
+
 export default function Services() {
   return (
     <>
       <Header />
       <main>
-        <section className="page-hero green">
-          <div className="wrap">
-            <Link className="back-link" href="/">
-              <ArrowLeft size={17} />
-              Voltar ao início
-            </Link>
-            <p className="kicker light">SERVIÇOS DUOLCODE</p>
-            <h1>
+        <PageHero
+          variant="green"
+          lightKicker
+          kicker="SERVIÇOS DUOLCODE"
+          title={
+            <>
               Da ideia ao digital.
               <br />
               <em>Do seu jeito.</em>
-            </h1>
-            <p>Sites e sistemas criados para o momento, a rotina e os objetivos da sua empresa.</p>
-          </div>
-        </section>
+            </>
+          }
+        >
+          Sites e sistemas criados para o momento, a rotina e os objetivos da sua empresa.
+        </PageHero>
         <section className="services-page wrap">
-          {offers.map(({ id, icon: Icon, number, title, intro, items }) => (
-            <article id={id} className="offer" key={id}>
-              <div className="offer-title">
-                <span>{number}</span>
-                <Icon size={32} />
-                <h2>{title}</h2>
-              </div>
-              <div className="offer-body">
-                <p>{intro}</p>
-                <ul>
-                  {items.map((item) => (
-                    <li key={item}>
-                      <Check size={17} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </article>
+          {offers.map((offer) => (
+            <OfferCard key={offer.id} {...offer} />
           ))}
         </section>
-        <section className="delivery">
-          <div className="wrap delivery-grid">
-            <div>
-              <p className="kicker">EM TODO PROJETO</p>
-              <h2>
-                Uma entrega completa, <em>sem complicação.</em>
-              </h2>
-            </div>
-            <div className="delivery-list">
-              <p>
-                <span>01</span>Diagnóstico e direcionamento
-              </p>
-              <p>
-                <span>02</span>Design pensado para sua marca
-              </p>
-              <p>
-                <span>03</span>Desenvolvimento responsivo
-              </p>
-              <p>
-                <span>04</span>Revisão e publicação
-              </p>
-            </div>
-          </div>
-        </section>
-        <section className="page-cta wrap">
-          <p className="kicker">SEU PROJETO COMEÇA AQUI</p>
-          <h2>
-            Qual dessas soluções
-            <br />
-            <em>leva sua empresa adiante?</em>
-          </h2>
-          <Link href="/contato" className="text-link">
-            Começar uma conversa <ArrowRight size={19} />
-          </Link>
-        </section>
+        <DeliverySection />
+        <CallToAction />
       </main>
       <Footer />
     </>
+  );
+}
+
+function OfferCard({ id, icon: Icon, number, title, intro, items }: (typeof offers)[number]) {
+  return (
+    <article id={id} className="offer">
+      <div className="offer-title">
+        <span>{number}</span>
+        <Icon size={32} />
+        <h2>{title}</h2>
+      </div>
+      <div className="offer-body">
+        <p>{intro}</p>
+        <ul>
+          {items.map((item) => (
+            <li key={item}>
+              <Check size={17} />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
+
+function DeliverySection() {
+  return (
+    <section className="delivery">
+      <div className="wrap delivery-grid">
+        <div>
+          <p className="kicker">EM TODO PROJETO</p>
+          <h2>
+            Uma entrega completa, <em>sem complicação.</em>
+          </h2>
+        </div>
+        <div className="delivery-list">
+          {deliverySteps.map((step, index) => (
+            <p key={step}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {step}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CallToAction() {
+  return (
+    <section className="page-cta wrap">
+      <p className="kicker">SEU PROJETO COMEÇA AQUI</p>
+      <h2>
+        Qual dessas soluções
+        <br />
+        <em>leva sua empresa adiante?</em>
+      </h2>
+      <Link href="/contato" className="text-link">
+        Começar uma conversa <ArrowRight size={19} />
+      </Link>
+    </section>
   );
 }

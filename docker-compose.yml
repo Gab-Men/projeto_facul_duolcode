@@ -68,7 +68,7 @@ services:
 
 volumes:
   mysql_data:
-    external: true
+    # Volume nomeado: o Compose cria na primeira execução e mantém os dados nas seguintes.
     name: projeto_facul_duolcode_mysql_data
 
 networks:

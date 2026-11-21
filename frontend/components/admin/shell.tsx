@@ -2,11 +2,22 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { AuthProvider, useAuth } from "../../contexts/auth-context";
-function Protected({ children }: { children: ReactNode }) {
+import { useAuth, type User } from "../../contexts/auth-context";
+
+const links = [
+  ["/painel", "Visão geral"],
+  ["/painel/clientes", "Clientes"],
+  ["/painel/servicos", "Serviços"],
+  ["/painel/parceiros", "Parceiros"],
+  ["/painel/projetos", "Projetos"],
+  ["/painel/estatisticas", "Estatísticas"],
+  ["/painel/perfil", "Meu perfil"],
+] as const;
+
+/** Área logada: protege as rotas e monta cabeçalho + navegação. */
+export function AdminShell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
@@ -16,39 +27,43 @@ function Protected({ children }: { children: ReactNode }) {
         <p role="status">Carregando sua conta…</p>
       </main>
     );
-  const links = [
-    ["/painel", "Visão geral"],
-    ["/painel/clientes", "Clientes"],
-    ["/painel/servicos", "Serviços"],
-    ["/painel/parceiros", "Parceiros"],
-    ["/painel/projetos", "Projetos"],
-    ["/painel/estatisticas", "Estatísticas"],
-    ["/painel/perfil", "Meu perfil"],
-  ];
   return (
     <div className="admin">
-      <header className="admin-header">
-        <Link href="/">DuolCode</Link>
-        <span className="admin-user"><span className="admin-avatar" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</span> Olá, {user.name}</span>
-        <button onClick={logout} className="admin-secondary">
-          Sair
-        </button>
-      </header>
-      <nav className="admin-nav" aria-label="Gestão">
-        {links.map(([href, label]) => (
-          <Link key={href} href={href} aria-current={(href === "/painel" ? pathname === href : pathname.startsWith(href + "/") || pathname === href) ? "page" : undefined}>
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <AdminHeader user={user} onLogout={logout} />
+      <AdminNav />
       <main className="admin-main">{children}</main>
     </div>
   );
 }
-export function AdminShell({ children }: { children: ReactNode }) {
+
+function AdminHeader({ user, onLogout }: { user: User; onLogout: () => void }) {
   return (
-    <AuthProvider>
-      <Protected>{children}</Protected>
-    </AuthProvider>
+    <header className="admin-header">
+      <Link href="/">DuolCode</Link>
+      <span className="admin-user">
+        <span className="admin-avatar" aria-hidden="true">
+          {user.name.slice(0, 1).toUpperCase()}
+        </span>{" "}
+        Olá, {user.name}
+      </span>
+      <button onClick={onLogout} className="admin-secondary">
+        Sair
+      </button>
+    </header>
+  );
+}
+
+function AdminNav() {
+  const pathname = usePathname();
+  const isCurrent = (href: string) =>
+    href === "/painel" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+  return (
+    <nav className="admin-nav" aria-label="Gestão">
+      {links.map(([href, label]) => (
+        <Link key={href} href={href} aria-current={isCurrent(href) ? "page" : undefined}>
+          {label}
+        </Link>
+      ))}
+    </nav>
   );
 }
