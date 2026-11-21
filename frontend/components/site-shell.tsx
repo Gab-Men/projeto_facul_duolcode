@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
+import { AccountLink } from "./site/account-link";
 
 // WhatsApp contact information
 const whatsappNumero = "5544997155774";
@@ -19,7 +20,7 @@ export function Header() {
           <Link href="/quem-somos">Quem somos</Link>
           <Link href="/parceiros">Parceiros</Link>
           <Link href="/contato">Contato</Link>
-          <Link href="/login">Área de gestão</Link>
+          <AccountLink />
         </nav>
         <Link className="nav-cta" href="/contato">
           Iniciar projeto <ArrowUpRight size={18} />

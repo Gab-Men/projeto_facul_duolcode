@@ -24,11 +24,11 @@ Integrantes: Gabriel Barreto Men e Pedro Henrique Rossato. Veja docs/SPRINT.md e
 | Back-end: edição (1,00) | `/users/me`, exige token, campos obrigatórios, CPF/senha, e-mail bloqueado | Implementado; integração real pendente |
 | Back-end: quatro CRUDs (1,00) | Clientes, serviços, parceiros, projetos; autenticação; paginação; inexistentes; FK cliente/projeto | Implementado; SQL e concorrência precisam de validação real |
 | Agentes (0,50) | AGENTS.md, três skills, instruções contra exposição de segredos e ações fora do escopo | Parcial: regras e exclusões não são um bloqueio técnico de leitura de .env |
-| Front-end: autenticação (0,50) | Formulário, validação, localStorage, mensagens e redirecionamento | Implementado; teste completo com API/MySQL pendente |
-| Front-end: cadastro (1,00) | Campos obrigatórios, confirmação de senha, CPF/e-mail, erros e retorno ao login | Implementado e conferido no navegador com API/MySQL |
-| Front-end: edição (1,00) | AuthProvider, nome global, CPF, senha/confirmar, e-mail somente leitura | Implementado; teste completo com API/MySQL pendente |
-| Front-end: CRUDs (1,00) | Listas paginadas, validações, criar/editar em rotas separadas | Implementado; fluxos de interface com banco real pendentes |
-| Componentização (0,50) | Field, Feedback, AuthForm, RecordForm, RecordList, AdminShell e componentes públicos separados | Área de gestão organizada; ainda extrair seções internas das páginas públicas |
+| Front-end: autenticação (0,50) | LoginForm, regex de e-mail, token no localStorage via `login()` do contexto, mensagens amigáveis (inclusive servidor fora do ar) e redirecionamento; quem já está logado vai direto ao painel | Implementado e conferido no navegador com API/MySQL via Nginx |
+| Front-end: cadastro (1,00) | RegisterForm: campos obrigatórios, máscara e validação de CPF, e-mail, nível da senha, confirmação, erros da API e retorno ao login | Implementado e conferido no navegador com API/MySQL |
+| Front-end: edição (1,00) | AuthProvider no layout raiz: nome no painel e no cabeçalho do site público; CPF, indicador de nível de senha, confirmação; e-mail somente leitura e fora do PUT | Implementado e conferido no navegador com API/MySQL |
+| Front-end: CRUDs (1,00) | Quatro CRUDs com `usePaginated<T>`, `DataTable<T>` e `Pagination`; validação de obrigatórios em `validateRecord`; criar/editar em rotas separadas; projetos mostram o cliente vinculado | Implementado e conferido no navegador com API/MySQL |
+| Componentização (0,50) | `components/ui` (Field, TextAreaField, SelectField, Feedback, Button, Pagination, DataTable<T>, CpfField, PasswordFields), `components/site` (PageHero, BackLink, AccountLink), `components/admin` e `hooks/`; páginas em `app/` compostas por seções em funções separadas | Implementado; HTML das páginas públicas conferido idêntico ao anterior |
 | Estatística: análise descritiva | Barras, histograma, métricas e metodologia com dados completos da conta | Implementado e testado; defesa preparada em docs/SPRINT.md |
 | Encapsulamento (0,50) | Entity e PortfolioAnalysis protegem entrada, estado e saída | Implementado e testado |
 | Acesso controlado (0,50) | Getters de cálculo em PortfolioAnalysis; relatório copiado, sem setters desnecessários | Implementado e testado |
@@ -37,7 +37,7 @@ Integrantes: Gabriel Barreto Men e Pedro Henrique Rossato. Veja docs/SPRINT.md e
 | SOLID (0,50) | Serviços dependem de contratos; MySQL e testes substituem persistência | Parcial: regras específicas e extensibilidade ainda simples; não declarar atendimento integral |
 | Exceções/organização (0,50) | AppError, NotFoundError, middleware, domain/services/repositories | Base implementada; aprimorar nomenclatura/modelagem conforme acordo da dupla |
 | Conexão com persona (0,50) | Gestão de clientes, serviços, parceiros e projetos de uma empresa digital | Plausível; falta validar necessidades e documentar persona |
-| TypeScript sem JS injetado (0,50) | Código da aplicação em TS/TSX; scripts sem injeção em páginas | Evidência favorável; configuração PostCSS em MJS não é código injetado |
+| TypeScript sem JS injetado (0,50) | Código da aplicação em TS/TSX; `allowJs: false` no front; scripts sem injeção em páginas | Evidência favorável; configuração PostCSS em MJS não é código injetado |
 | Evolução: dois itens em branco (0,20 cada) | — | Esclarecer com professor |
 
 ## Cuidados com a evidência
@@ -47,6 +47,8 @@ Integrantes: Gabriel Barreto Men e Pedro Henrique Rossato. Veja docs/SPRINT.md e
 - Não apresentar AGENTS.md/.gitignore como isolamento de acesso ao sistema de arquivos.
 - Os cadastros públicos continuam estáticos; o CRUD existe na área autenticada.
 - Não adicione herança ou getters artificiais só para marcar uma caixa: modele uma regra concreta.
+
+O volume `mysql_data` não é mais `external`: o Compose cria o volume na primeira execução em qualquer máquina e reaproveita o existente nas seguintes.
 
 O ambiente Docker foi executado com os quatro serviços. As imagens compilaram e a integração da sprint passou na porta 8080. Somente Nginx tem porta publicada; MySQL permanece na rede interna. Essa infraestrutura é suporte à execução, sem atribuição de pontuação não descrita no PDF.
 

@@ -1,4 +1,4 @@
-import { AuthForm } from "../../components/admin/auth-form";
+import { LoginForm } from "../../components/admin/auth-form";
 export default async function Login({
   searchParams,
 }: {
@@ -12,7 +12,7 @@ export default async function Login({
           Conta criada. Entre com seu e-mail e senha.
         </p>
       )}
-      <AuthForm />
+      <LoginForm />
     </>
   );
 }

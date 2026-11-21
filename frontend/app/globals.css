@@ -1944,3 +1944,27 @@ body:has(.admin) .whatsapp-fixed {
   .admin-title h1 { width: 100%; } .stats-bar-row { grid-template-columns: minmax(60px, 95px) minmax(20px, 1fr) 30px; }
 }
 @media (prefers-reduced-motion: reduce) { .admin *, .admin *::before, .admin *::after { transition: none !important; animation: none !important; } }
+
+/* Mensagem de sucesso e nível da senha (componentes em components/ui). */
+.admin-feedback.is-success {
+  background: #e3f1dc;
+  border-color: #8fbf86;
+  color: #1f4d2c;
+}
+.password-level {
+  margin: -6px 0 6px !important;
+  font-size: 12px;
+  color: #536454;
+}
+.password-level strong {
+  text-transform: capitalize;
+}
+.password-level[data-level="fraca"] strong {
+  color: #a52c23;
+}
+.password-level[data-level="média"] strong {
+  color: #8a6d00;
+}
+.password-level[data-level="forte"] strong {
+  color: #225133;
+}
